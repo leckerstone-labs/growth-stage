@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Growth Stage app icon: a stylised wheat ear. Source for the PNG icons: render them with scripts/render-icons.js. -->
+  <rect width="512" height="512" rx="112" fill="#2f5d3a"/>
+  <g transform="translate(-14 0)">
+  <g fill="none" stroke="#efebe1" stroke-linecap="round">
+    <path d="M256 326 C 256 360 254 392 249 428" stroke-width="11"/>
+    <path d="M252 412 C 268 362 306 326 360 300 C 334 338 300 372 254 426 Z" fill="#b7c79a" stroke="none"/>
+  </g>
+  <g fill="#e2c56f">
+    <ellipse cx="237.0" cy="300.0" rx="15.0" ry="30.0" transform="rotate(-28 237.0 300.0)"/>
+    <ellipse cx="275.0" cy="300.0" rx="15.0" ry="30.0" transform="rotate(28 275.0 300.0)"/>
+    <ellipse cx="238.3" cy="266.0" rx="13.9" ry="27.9" transform="rotate(-28 238.3 266.0)"/>
+    <ellipse cx="273.7" cy="266.0" rx="13.9" ry="27.9" transform="rotate(28 273.7 266.0)"/>
+    <ellipse cx="239.7" cy="232.0" rx="12.9" ry="25.8" transform="rotate(-28 239.7 232.0)"/>
+    <ellipse cx="272.3" cy="232.0" rx="12.9" ry="25.8" transform="rotate(28 272.3 232.0)"/>
+    <ellipse cx="241.0" cy="198.0" rx="11.9" ry="23.7" transform="rotate(-28 241.0 198.0)"/>
+    <ellipse cx="271.0" cy="198.0" rx="11.9" ry="23.7" transform="rotate(28 271.0 198.0)"/>
+    <ellipse cx="242.3" cy="164.0" rx="10.8" ry="21.6" transform="rotate(-28 242.3 164.0)"/>
+    <ellipse cx="269.7" cy="164.0" rx="10.8" ry="21.6" transform="rotate(28 269.7 164.0)"/>
+    <ellipse cx="243.7" cy="130.0" rx="9.7" ry="19.5" transform="rotate(-28 243.7 130.0)"/>
+    <ellipse cx="268.4" cy="130.0" rx="9.7" ry="19.5" transform="rotate(28 268.4 130.0)"/>
+    <ellipse cx="256" cy="106" rx="11" ry="26"/>
+  </g>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+.playwright-mcp/
+.DS_Store
+node_modules/
+# AHDB illustrations downloaded for visual reference only (copyright AHDB) — do not commit or ship.
+reference/
+dist/
+
+# Maintainer notes, kept local
+PROJECT_LOG.md
+IDEA.md

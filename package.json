@@ -1,0 +1,10 @@
+{
+  "name": "growth-stage-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python3 scripts/serve.py",
+    "check": "node scripts/check-stages.js",
+    "build-site": "sh scripts/build-site.sh"
+  }
+}

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#efebe1" />
+  <title>Growth Stage — animated crop growth-stage guide</title>
+  <meta name="description" content="Scrub an animated wheat, barley or oilseed rape plant through its growth stages, then check the feature that defines each one. Free, works offline." />
+  <link rel="canonical" href="https://growthstage.leckerstonelabs.com/" />
+
+  <!-- Installable app (PWA): manifest, icons and iOS home-screen settings -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="favicon.ico" sizes="48x48" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Growth Stage" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <!-- Link previews (Open Graph / X) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Leckerstone Labs" />
+  <meta property="og:title" content="Growth Stage — animated crop growth-stage guide" />
+  <meta property="og:description" content="Scrub an animated wheat, barley or oilseed rape plant through its growth stages, then check the feature that defines each one." />
+  <meta property="og:url" content="https://growthstage.leckerstonelabs.com/" />
+  <meta property="og:image" content="https://growthstage.leckerstonelabs.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="A 3D winter wheat plant at flowering (GS65) with the Growth Stage title" />
+  <meta property="og:locale" content="en_GB" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Growth Stage — animated crop growth-stage guide" />
+  <meta name="twitter:description" content="Scrub an animated wheat, barley or oilseed rape plant through its growth stages, then check the feature that defines each one." />
+  <meta name="twitter:image" content="https://growthstage.leckerstonelabs.com/og-image.png" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <!-- The Content-Security-Policy in dist/_headers allows this inline import
+       map by its SHA-256 hash, computed by scripts/build-site.sh. Any edit here
+       is picked up on the next build. Add no other inline scripts. -->
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js" } }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <canvas id="view" aria-label="3D crop plant"></canvas>
+    <svg id="overlay-lines" aria-hidden="true"></svg>
+    <div id="overlay-labels" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="brand">Growth Stage <select id="crop" aria-label="Crop"></select></div>
+      <div class="stage" aria-live="polite">
+        <div class="code" id="code">GS—</div>
+        <div class="titles">
+          <div class="title" id="title"></div>
+          <div class="sub" id="sub"></div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="views" id="views" aria-label="Inspection view"></nav>
+
+    <aside class="info" id="info">
+      <button class="info-toggle" id="info-toggle" aria-expanded="false" aria-controls="info-body">
+        <span class="grab" aria-hidden="true"></span>
+        <span class="it-text">
+          <span class="it-title">What to check at this stage</span>
+          <span class="it-sub" id="readout-short"></span>
+        </span>
+        <span class="it-btn"><span class="it-btn-text">Details</span><span class="chev" aria-hidden="true"></span></span>
+      </button>
+      <div class="info-body" id="info-body">
+        <div class="info-inner">
+          <section class="card check">
+            <h3>Check on the plant</h3>
+            <p id="check"></p>
+            <button class="inspect-btn" id="inspect-btn"></button>
+          </section>
+          <section class="card">
+            <h3>What changes</h3>
+            <p id="desc"></p>
+          </section>
+          <section class="card">
+            <h3 id="readout-title">On the model</h3>
+            <div class="readout" id="readout"></div>
+          </section>
+          <footer>
+            <p class="note">Illustrative model — exaggerated where it helps. Variety, sowing date and conditions change how plants look; never judge stage by height alone. Check several representative main shoots.</p>
+            <p class="note">Draft content, not yet reviewed by an agronomist. Not a substitute for professional agronomic advice, and not endorsed by AHDB. Spotted a mistake? <a href="https://github.com/leckerstone-labs/growth-stage/issues" target="_blank" rel="noopener">Report it on GitHub</a>.</p>
+            <p class="sources" id="sources"></p>
+            <p class="about">
+              <a href="https://leckerstonelabs.com/projects/growth-stage?utm_source=growthstage&amp;utm_medium=app" target="_blank" rel="noopener">A Leckerstone Labs project</a>
+              · <a href="https://github.com/leckerstone-labs/growth-stage" target="_blank" rel="noopener">Source on GitHub</a>
+              <button class="install-btn" id="install-btn" hidden>Install app</button>
+            </p>
+            <p class="note" id="install-hint" hidden>To use it like an app, offline too: tap Share, then Add to Home Screen.</p>
+          </footer>
+        </div>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" aria-hidden="true"></div>
+
+    <div class="tools">
+      <label class="toggle"><input type="checkbox" id="variant" /> <span id="variant-label"></span></label>
+    </div>
+
+    <div class="camctl" role="group" aria-label="View controls">
+      <button id="zoom-in" aria-label="Zoom in" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button id="zoom-out" aria-label="Zoom out" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      <button id="reset" aria-label="Reset view" title="Reset view (double-tap the plant)"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg><span class="lbl-text">Reset view</span></button>
+    </div>
+    <div class="hint" id="hint" aria-hidden="true"></div>
+
+    <div class="toast" id="update-toast" role="status" hidden>
+      <span>Update available</span>
+      <button class="toast-reload" id="update-reload">Reload</button>
+      <button class="toast-close" id="update-dismiss" aria-label="Dismiss">×</button>
+    </div>
+
+    <div class="timeline">
+      <div class="controls">
+        <button id="prev" aria-label="Previous stage"><span>‹</span></button>
+        <button id="play" aria-label="Play">▶</button>
+        <button id="next" aria-label="Next stage"><span>›</span></button>
+      </div>
+      <div class="track" id="track">
+        <div class="phases" id="phases"></div>
+        <div class="ticks" id="ticks"></div>
+        <input type="range" id="slider" min="0" max="100" step="0.01" value="28" aria-label="Development" />
+        <div class="thumb" id="thumb" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/pwa.js"></script>
+</body>
+</html>
