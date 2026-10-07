@@ -8,3 +8,4 @@ dist/
 # Maintainer notes, kept local
 PROJECT_LOG.md
 IDEA.md
+.cloudflare/

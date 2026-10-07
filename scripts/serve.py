@@ -10,4 +10,6 @@ class NoCache(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-http.server.ThreadingHTTPServer(('', 8642), functools.partial(NoCache, directory=root)).serve_forever()
+# 127.0.0.1 only: the server shares the whole project folder (including git-ignored notes),
+# so other devices on the network must not reach it.
+http.server.ThreadingHTTPServer(('127.0.0.1', 8642), functools.partial(NoCache, directory=root)).serve_forever()
