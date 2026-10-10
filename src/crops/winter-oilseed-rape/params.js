@@ -10,7 +10,8 @@
 //   - Leaves 1–12 form the rosette on a short crown at soil level.
 //   - Leaves 13–20 are stem leaves, one above each of the first eight
 //     extending internodes; a ninth internode carries the main raceme.
-//   - Side branches grow from the axils of the top six stem leaves.
+//   - Side branches grow from the axils of the stem leaves: all eight, the
+//     lowest ones small (AHDB: typically 6–10 primary branches).
 // Values are illustrative and need checking against real plants.
 
 export const SEED_DEPTH = 1.5; // drilling depth, cm (AHDB: shallow, ~1–2 cm)
@@ -40,14 +41,17 @@ export const MAIN_RACEME = { n: 48, len: 50, podLen: [7, 4.8], scale: 1 };
 
 // Side branches from the axils of stem leaves (index into stem leaves 1–8),
 // top first. lag: timeline units behind the main raceme. stalk: branch length
-// below its raceme. angle: lean from vertical at the base, degrees.
+// below its raceme. angle: lean from vertical at the base, degrees. Each
+// branch also gets a little seeded variation (model/brassica.js).
 export const BRANCHES = [
-  { leaf: 8, lag: 2.2, stalk: 12, angle: 30, n: 28, len: 30, scale: 0.92 },
-  { leaf: 7, lag: 3.0, stalk: 17, angle: 33, n: 27, len: 29, scale: 0.9 },
-  { leaf: 6, lag: 3.8, stalk: 22, angle: 36, n: 26, len: 28, scale: 0.88 },
-  { leaf: 5, lag: 4.6, stalk: 27, angle: 38, n: 24, len: 26, scale: 0.85 },
-  { leaf: 4, lag: 5.4, stalk: 31, angle: 40, n: 22, len: 24, scale: 0.82 },
-  { leaf: 3, lag: 6.2, stalk: 33, angle: 42, n: 20, len: 22, scale: 0.78 },
+  { leaf: 8, lag: 2.2, stalk: 12, angle: 34, n: 28, len: 30, scale: 0.92 },
+  { leaf: 7, lag: 3.0, stalk: 17, angle: 38, n: 27, len: 29, scale: 0.9 },
+  { leaf: 6, lag: 3.8, stalk: 22, angle: 41, n: 26, len: 28, scale: 0.88 },
+  { leaf: 5, lag: 4.6, stalk: 27, angle: 43, n: 24, len: 26, scale: 0.85 },
+  { leaf: 4, lag: 5.4, stalk: 31, angle: 45, n: 22, len: 24, scale: 0.82 },
+  { leaf: 3, lag: 6.2, stalk: 33, angle: 46, n: 20, len: 22, scale: 0.78 },
+  { leaf: 2, lag: 7.0, stalk: 34, angle: 47, n: 17, len: 19, scale: 0.74 },
+  { leaf: 1, lag: 7.8, stalk: 33, angle: 48, n: 14, len: 16, scale: 0.7 },
 ];
 
 // Pods (siliques): radius, beak length and pedicel length (cm), seeds per pod.

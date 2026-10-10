@@ -41,6 +41,7 @@ npm run build-site  # build dist/ (stamps the service worker, writes _headers)
 | Agronomic content | `src/crops/<crop>/stages.js` | Stage codes, text, checks, sources, timeline position `t` (0–100), phases, tick labels, crop-specific UI wording. No rendering code. |
 | Key states | `src/crops/<crop>/keyframes.js` + `src/model/keyframes.js` | One row per checkpoint (per crop); values carry forward; monotone-spline interpolation (no overshoot, so thresholds are crossed once). Extra channels in a crop's first row are interpolated too. |
 | Dimensions | `src/crops/<crop>/params.js` | Leaf/sheath/blade tables, shoots, stem radii, ear profile, ear and collar type. |
+| Variation | `src/model/random.js` | Seeded PRNG (`variation(seed, crop.id, partId)`) for per-tiller/branch irregularity. Draw once when the model is created, never per frame, never `Math.random`. Main shoot / main raceme are never varied. `?seed=` picks the plant (default `DEFAULT_SEED`). |
 | Morphology | `src/model/morphology.js` (cereals), `src/model/brassica.js` (OSR) | Pure maths (no three.js). `src/model/index.js` picks one by `crop.family`. Each returns `computePlant`, `measureMain`, `checkStages` (runs the crop's `checks.js`) and `tAt`; brassica also returns `table` for `npm run check`. |
 | Rendering | `src/render/*.js` | Cereals: merged-geometry batches (`plant-mesh.js`), instanced ear (`ear-mesh.js`), grain close-up. OSR: `brassica-mesh.js` (reuses `Batch`), `pod-view.js` seed close-up. Shared: soil, materials. |
 | Views | `src/views/cereal.js`, `src/views/brassica.js` | Per crop family: which views are enabled when, geometry build per view, readout rows, overlay items and camera goal. `src/views/index.js` picks one by `crop.family`. |
@@ -83,7 +84,7 @@ What differs per crop. These are reference notes: verify each against AHDB befor
 - **Oats (spring):** the inflorescence is a panicle, not a spike, so it needs a new builder. No auricles; a prominent ligule. Same Zadoks codes.
 - **Oilseed rape:** winter OSR is done (`src/crops/winter-oilseed-rape/`, `family: 'brassica'`). AHDB uses the BBCH two-digit key for OSR, so codes look like cereal ones but mean different things (GS30 rosette, GS51 green bud, GS59 yellow bud, GS65 full flower, GS8x share of pods ripe).
   - Principal stages overlap in the field; AHDB says record the most advanced. The timeline follows that: GS3x internode count and GS2x side shoots are readouts, not checkpoints.
-  - Model: rosette leaves on a crown, stem leaves one per node, side racemes from the top six stem-leaf axils. Each side raceme runs the main raceme's keyframes with a lag (`BRANCHES[].lag`).
+  - Model: rosette leaves on a crown, stem leaves one per node, side racemes from all eight stem-leaf axils (smaller and later lower down). Each side raceme runs the main raceme's keyframes with a lag (`BRANCHES[].lag`).
   - Every flower position is tracked from bud → flower → pod via the `opened`/`fallen`/`podFull`/`seed` channels, so the BBCH percentages are counted, not drawn.
   - Spring OSR would be a new folder reusing `brassica.js` with fewer leaves and no winter rosette.
 - **Spring crops in general:** sown in spring, fewer leaves, faster development. Use separate `params.js`/`keyframes.js`; don't reuse winter rows.

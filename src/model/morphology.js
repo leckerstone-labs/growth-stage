@@ -25,6 +25,7 @@
 
 import { buildKeyframes } from './keyframes.js';
 import { clamp, lerp, smoothstep, hash, monotoneSpline } from './interp.js';
+import { variation, DEFAULT_SEED } from './random.js';
 
 export const CROWN_DEPTH = 1.2; // cm below soil, once the crown has formed
 export const SEED_DEPTH = 3.2; // drilling depth (centre of the seed), cm
@@ -48,7 +49,7 @@ const DEG = Math.PI / 180;
 // distichous: alternate leaves on opposite sides, with a little jitter.
 const mainLeafAzimuth = (n) => n * Math.PI + (hash('az', n) - 0.5) * 0.5;
 
-export function createModel(crop) {
+export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
   const STAGES = crop.stages;
   const { MAIN, ERECT_ANGLE, earProfile, EAR } = crop.params;
   const keyframes = buildKeyframes(STAGES, crop.rows, monotoneSpline);
@@ -60,10 +61,36 @@ export function createModel(crop) {
   const wallOf = (mi) => lerp(0.013, SHEATH_WALL, mi / (MAIN.N - 1));
   const erectAngle = (top) => ERECT_ANGLE[Math.min(top, ERECT_ANGLE.length - 1)] * DEG;
 
-  function computeShoot(def, t) {
+  // Natural irregularity between tillers (src/model/random.js), drawn once
+  // per plant so every frame shows the same plant. The main shoot (k = 0)
+  // is never varied: npm run check measures it. Tiller appearance and death
+  // timings are not varied either, so shoot counts at each stage stay put.
+  const VARY = SHOOTS.map((def) => {
+    if (!def.k) return null;
+    const v = variation(seed, crop.id, def.id);
+    return {
+      az: v.jitter(0.5), // radians, round the main shoot
+      offset: v.factor(0.2), // distance of the base from the main shoot
+      lag: v.jitter(0.35), // timeline units, added to def.lag after GS24
+      scale: v.factor(0.05), // height, leaf and ear size
+      leanP: v.jitter(6), // degrees, prostrate (winter) lean
+      leanE: v.jitter(3), // degrees, erect lean once stems extend
+      bend: v.factor(0.3), // how quickly the lean straightens up
+      leanTop: v.range(0.25, 0.55), // share of the base lean kept at the top
+      earNod: v.range(2, 5), // degrees the emerged ear leans out
+      earTwist: v.u() * Math.PI, // which way the ear faces
+      leaves: Array.from({ length: MAIN.N }, () => ({
+        blade: v.factor(0.1), width: v.factor(0.06), droop: v.factor(0.2), twist: v.factor(0.3), az: v.jitter(0.3),
+      })),
+    };
+  });
+
+  function computeShoot(def, t, V) {
     const { k } = def;
     const N = MAIN.N - (k ? k + 2 : 0);
-    const lagEff = def.lag * smoothstep(tAt(24), between(32, 33, 0.5), t);
+    // Tillers' leaf jitter is keyed by the seed; the main shoot keeps its own.
+    const h = V ? (...p) => hash(seed, crop.id, ...p) : hash;
+    const lagEff = (def.lag + (V ? V.lag : 0)) * smoothstep(tAt(24), between(32, 33, 0.5), t);
     let ts = t - lagEff;
     let dead = 0, hide = 0;
     if (def.death) {
@@ -76,16 +103,16 @@ export function createModel(crop) {
     const H = K.vH - (k ? k + 2 : 0); // this shoot's own leaf clock
     if (k && H <= 0) return null; // tiller not yet emerged
 
-    const sc = def.scale;
+    const sc = def.scale * (V ? V.scale : 1);
     const tillerAppear = k ? smoothstep(0, 0.6, H) : 1;
 
     // ---- Placement ----------------------------------------------------------
-    const az = k ? mainLeafAzimuth(k) + (hash('taz', k) - 0.5) * 0.9 : 0;
-    const offset = k ? 0.22 + 0.06 * k : 0;
+    const az = k ? mainLeafAzimuth(k) + V.az : 0;
+    const offset = k ? (0.22 + 0.06 * k) * V.offset : 0;
     // The shoot base rises from the seed as the sub-crown internode extends.
     const baseY = -SEED_DEPTH + K.subcrown - 0.03 * k;
     const base = [Math.cos(az) * offset, baseY, Math.sin(az) * offset];
-    const lean = (lerp(def.leanP, def.leanE, K.habit) + dead * 25 + hide * 20) * DEG;
+    const lean = (lerp(def.leanP + (V ? V.leanP : 0), def.leanE + (V ? V.leanE : 0), K.habit) + dead * 25 + hide * 20) * DEG;
     const dir = [Math.sin(lean) * Math.cos(az), Math.cos(lean), Math.sin(lean) * Math.sin(az)];
 
     // ---- Nodes and internodes -----------------------------------------------
@@ -131,16 +158,17 @@ export function createModel(crop) {
       sen = Math.max(sen, dead);
       const decay = smoothstep(n + 7.5, n + 9.5, H);
 
-      const B = MAIN.blade[mi] * sc * (k ? 0.95 : 1);
-      const W = MAIN.width[mi] * sc;
-      let posture = lerp(lerp(62, 70, hash('pp', k, n)) * DEG, erectAngle(top), K.habit);
+      const lv = V ? V.leaves[n - 1] : null;
+      const B = MAIN.blade[mi] * sc * (k ? 0.95 * lv.blade : 1);
+      const W = MAIN.width[mi] * sc * (lv ? lv.width : 1);
+      let posture = lerp(lerp(62, 70, h('pp', k, n)) * DEG, erectAngle(top), K.habit);
       // Seedling leaves are short and stiff and stand fairly upright (AHDB
       // GS13 drawing) before the plant spreads out during tillering.
-      posture = lerp(lerp(26, 34, hash('sp', k, n)) * DEG, posture, smoothstep(2.5, 5, K.vH));
+      posture = lerp(lerp(26, 34, h('sp', k, n)) * DEG, posture, smoothstep(2.5, 5, K.vH));
       const tilt = lerp(0, posture, smoothstep(0.72, 1, e));
       // Longer blades arch over more; short seedling leaves barely droop.
       const droopBase = top === 1 ? 0.55 : 0.25 + 0.95 * Math.pow(B / 25, 1.3);
-      const droop = (droopBase * lerp(1.35, 1, K.habit)) * Math.pow(e, 3) + sen * 1.5;
+      const droop = (droopBase * lerp(1.35, 1, K.habit)) * (lv ? lv.droop : 1) * Math.pow(e, 3) + sen * 1.5;
       leaves.push({
         n, top, m, flag: top === 1,
         nodeS: sNode, collarS: collar, prevCollarS: prevCollar, bladeBaseS: bladeBase,
@@ -152,9 +180,9 @@ export function createModel(crop) {
         // emerging (ligule about to appear).
         curl: (1 - smoothstep(0.72, 1, e)) + sen * 0.45,
         tilt, droop,
-        twist: (top === 1 ? 0.9 : 0.35 + hash('tw', k, n) * 0.7) * (B / 22) * (1 + sen),
-        sway: (hash('sw', k, n) - 0.5) * 0.5,
-        az: (k ? az + Math.PI / 2 : 0) + mainLeafAzimuth(n) + (k ? (hash('la', k, n) - 0.5) * 0.4 : 0),
+        twist: (top === 1 ? 0.9 : 0.35 + h('tw', k, n) * 0.7) * (B / 22) * (1 + sen) * (lv ? lv.twist : 1),
+        sway: (h('sw', k, n) - 0.5) * 0.5,
+        az: (k ? az + Math.PI / 2 + lv.az : 0) + mainLeafAzimuth(n),
         sen, decay,
         // A leaf takes up room once it exists; long-dead lower leaves have
         // rotted away and no longer wrap the shoot.
@@ -267,6 +295,10 @@ export function createModel(crop) {
     return {
       id: def.id, k, N, ts, K, H, seedling,
       base, dir, az, lean,
+      // Shape of the shoot axis (render/plant-mesh.js makeAxis) and of the
+      // ear's lean once free of the sheath (render/ear-mesh.js earFrame).
+      bend: 6 * (V ? V.bend : 1), leanTop: V ? V.leanTop : 0.4,
+      earNod: V ? V.earNod : 0, earTwist: V ? V.earTwist : 0,
       scale: sc * tillerAppear,
       alive: 1 - hide,
       dead, hide,
@@ -280,8 +312,8 @@ export function createModel(crop) {
 
   function computePlant(t) {
     const shoots = [];
-    for (const def of SHOOTS) {
-      const sh = computeShoot(def, t);
+    for (const [i, def] of SHOOTS.entries()) {
+      const sh = computeShoot(def, t, VARY[i]);
       if (sh && sh.alive > 0.01) shoots.push(sh);
     }
     return { t, K: keyframes(t), shoots, main: shoots[0] };

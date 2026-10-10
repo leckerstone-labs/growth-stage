@@ -22,6 +22,7 @@
 
 import { buildKeyframes } from './keyframes.js';
 import { clamp, lerp, smoothstep, hash, monotoneSpline } from './interp.js';
+import { variation, DEFAULT_SEED } from './random.js';
 
 const DEG = Math.PI / 180;
 const GOLDEN = 137.5 * DEG;
@@ -55,8 +56,9 @@ export function polyAxis(pts) {
   };
 }
 
-// Axis that leans out from its base by `angle` and turns upwards as it
-// grows (branches), in the vertical plane at azimuth az.
+// Axis that leans out from its base by `angle` and turns upwards to `top`
+// (both from vertical) over about `bend` cm as it grows (branches), in the
+// vertical plane at azimuth az.
 function leaningAxis(base, az, angle, top, length, bend = 10) {
   const pts = [base];
   const step = 0.5;
@@ -70,7 +72,7 @@ function leaningAxis(base, az, angle, top, length, bend = 10) {
   return polyAxis(pts);
 }
 
-export function createBrassicaModel(crop) {
+export function createBrassicaModel(crop, { seed = DEFAULT_SEED } = {}) {
   const STAGES = crop.stages;
   const P = crop.params;
   const keyframes = buildKeyframes(STAGES, crop.rows, monotoneSpline);
@@ -83,6 +85,24 @@ export function createBrassicaModel(crop) {
   // first. The top one, under the raceme, starts early and runs long: it is
   // what lifts the buds clear of the youngest leaves (GS53).
   const intWindow = (i) => (i === NI - 1 ? [0.18, 0.92] : [i * 0.065, i * 0.065 + 0.4]);
+
+  // Side branches with their natural irregularity (src/model/random.js),
+  // drawn once per plant so every frame shows the same plant. The main
+  // raceme is never varied: npm run check measures it.
+  const BRANCHES = P.BRANCHES.map((def, j) => {
+    const v = variation(seed, crop.id, `B${j + 1}`);
+    return {
+      ...def,
+      az: v.jitter(0.35), // radians off the leaf it grows from
+      angle: def.angle + v.jitter(5), // degrees from vertical at the base
+      top: v.range(5, 13), // degrees from vertical it turns up to
+      bend: 10 * v.factor(0.3), // cm over which it turns up
+      lag: def.lag + v.jitter(0.4), // timeline units
+      stalk: def.stalk * v.factor(0.08),
+      len: def.len * v.factor(0.08),
+      scale: def.scale * v.factor(0.04),
+    };
+  });
 
   // Seed state of the pod at position x (0 bottom … 1 top) of a raceme.
   const seedAt = (K, x) => clamp(K.seed + P.SEED_SPREAD * smoothstep(0, 2, K.seed) * (0.5 - x), 0, 5.2);
@@ -279,16 +299,16 @@ export function createBrassicaModel(crop) {
     // ---- Racemes --------------------------------------------------------------
     const main = computeRaceme('main', P.MAIN_RACEME, K, mainAxis, racemeBaseS, P.MAIN_RACEME.podLen);
     const branches = [];
-    for (const [j, def] of P.BRANCHES.entries()) {
+    for (const [j, def] of BRANCHES.entries()) {
       const Kb = keyframes(Math.max(0, t - def.lag));
       const stalk = def.stalk * smoothstep(0.3, 0.9, Kb.ext);
       if (Kb.bud < 0.05 || K.ext < 0.3) continue;
       const leaf = leaves[NR + def.leaf - 1];
-      const az = leaf.az + (hash('ba', j) - 0.5) * 0.3;
+      const az = leaf.az + def.az;
       const radial = [Math.cos(az), 0, Math.sin(az)];
       const base = add(mainAxis.at(leaf.s + 0.3).p, radial, stemRadius(leaf.s) * 0.8);
       const R = Kb.rach * (def.len / 50);
-      const axis = leaningAxis(base, az, def.angle * DEG, 6 * DEG, stalk + R + 2);
+      const axis = leaningAxis(base, az, def.angle * DEG, def.top * DEG, stalk + R + 2, def.bend);
       const r = computeRaceme(`B${j + 1}`, def, Kb, axis, Math.max(0.05, stalk), P.MAIN_RACEME.podLen);
       r.stalk = stalk;
       r.leaf = def.leaf;

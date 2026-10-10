@@ -3,4 +3,5 @@
 import { createModel } from './morphology.js';
 import { createBrassicaModel } from './brassica.js';
 
-export const createCropModel = (crop) => (crop.family === 'brassica' ? createBrassicaModel(crop) : createModel(crop));
+// opts.seed (optional) picks the plant's natural variation (model/random.js).
+export const createCropModel = (crop, opts = {}) => (crop.family === 'brassica' ? createBrassicaModel(crop, opts) : createModel(crop, opts));

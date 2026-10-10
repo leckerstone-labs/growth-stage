@@ -11,10 +11,13 @@ import { SoilBlock } from './render/soil.js';
 const $ = (id) => document.getElementById(id);
 
 // The crop comes from the URL (?crop=winter_barley); switching crop reloads
-// the page with the new id.
+// the page with the new id. ?seed=<number> draws a different plant (tillers
+// and side branches vary; the main shoot never does).
 const params = new URLSearchParams(location.search);
 const crop = getCrop(params.get('crop'));
-const model = createCropModel(crop);
+const seedParam = params.get('seed');
+const seed = seedParam !== null && /^\d{1,9}$/.test(seedParam) ? Number(seedParam) : undefined;
+const model = createCropModel(crop, { seed });
 const { computePlant, checkStages, tAt } = model;
 const { stages: STAGES, phases: PHASES, sources: SOURCES, views: INSPECT_VIEWS } = crop;
 
@@ -24,6 +27,7 @@ const cropSelect = $('crop');
 for (const c of CROPS) cropSelect.add(new Option(c.name, c.id, false, c === crop));
 cropSelect.addEventListener('change', () => {
   const q = new URLSearchParams({ crop: cropSelect.value, gs: stageAt(state.t).cur.code, view: state.mode });
+  if (seed !== undefined) q.set('seed', seed);
   location.search = q.toString();
 });
 
