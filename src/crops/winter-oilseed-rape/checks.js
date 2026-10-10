@@ -1,10 +1,28 @@
-// Stage rules for winter oilseed rape (AHDB BBCH key), checked by
-// `npm run check` and at start-up.
+// Stage rules for oilseed rape (AHDB BBCH key), checked by `npm run check`
+// and at start-up. osrChecks() holds the rules shared by winter and spring
+// oilseed rape (src/crops/spring-oilseed-rape/checks.js), with the size
+// benchmarks passed in; checks() is winter oilseed rape's set.
 //
 // Helpers: { at(code) → measureMain(), plantAt(code) → computePlant(),
 // expect(code, ok, msg), SEED_DEPTH }
 
-export function checks({ at, plantAt, expect }) {
+// Winter benchmarks (AHDB: 100–160 cm; ~200 pods per plant at 6,000–8,000
+// pods/m² and 25–40 plants/m²). GS19 (9 or more leaves) is a checkpoint:
+// the oldest leaves are dying back by then.
+export const WINTER = {
+  leafStages: [[11, 1], [12, 2], [13, 3], [14, 4], [16, 6]],
+  gs19: true,
+  finalHeight: [100, 160],
+  heightNote: '100–160 cm',
+  pods: [150, 320],
+  rosetteHeight: 20,
+};
+
+export function checks(helpers) {
+  osrChecks(helpers, WINTER);
+}
+
+export function osrChecks({ at, expect }, B) {
   const pct = (x) => `${Math.round(x * 100)}%`;
   // Germination and emergence (epigeal: the hypocotyl lifts the cotyledons).
   let m = at(5);
@@ -19,13 +37,15 @@ export function checks({ at, plantAt, expect }) {
   expect(10, m.leavesUnfolded === 0, 'no true leaf unfolded');
 
   // Leaf production: BBCH counts true leaves unfolded on the main stem.
-  for (const [code, n] of [[11, 1], [12, 2], [13, 3], [14, 4], [16, 6]]) {
+  for (const [code, n] of B.leafStages) {
     m = at(code);
     expect(code, m.leavesUnfolded === n, `${n} leaves unfolded (${m.leavesUnfolded})`);
   }
-  m = at(19);
-  expect(19, m.leavesUnfolded >= 9, `9 or more leaves unfolded (${m.leavesUnfolded})`);
-  expect(19, m.leavesGreen < m.leavesUnfolded, 'oldest leaves dying back');
+  if (B.gs19) {
+    m = at(19);
+    expect(19, m.leavesUnfolded >= 9, `9 or more leaves unfolded (${m.leavesUnfolded})`);
+    expect(19, m.leavesGreen < m.leavesUnfolded, 'oldest leaves dying back');
+  }
 
   // Rosette and stem extension.
   m = at(30);
@@ -84,10 +104,10 @@ export function checks({ at, plantAt, expect }) {
   expect(83, s.top >= 2 && s.top < 3.6 && s.middle >= 3 && s.middle < 4.5 && s.bottom >= 4.3,
     `swathing seed-colour pattern (top ${s.top.toFixed(1)}, middle ${s.middle.toFixed(1)}, bottom ${s.bottom.toFixed(1)})`);
 
-  // Size benchmarks (AHDB: 100–160 cm; ~200 pods per plant at 6,000–8,000
-  // pods/m² and 25–40 plants/m²).
+  // Size benchmarks (B).
   m = at(89);
-  expect(89, m.height >= 100 && m.height <= 160, `final height 100–160 cm (${m.height.toFixed(0)})`);
-  expect(89, m.pods >= 150 && m.pods <= 320, `150–320 pods per plant (${m.pods})`);
-  expect(30, at(30).height < 20, `rosette is short (${at(30).height.toFixed(0)} cm)`);
+  const [h0, h1] = B.finalHeight, [p0, p1] = B.pods;
+  expect(89, m.height >= h0 && m.height <= h1, `final height ${B.heightNote} (${m.height.toFixed(0)})`);
+  expect(89, m.pods >= p0 && m.pods <= p1, `${p0}–${p1} pods per plant (${m.pods})`);
+  expect(30, at(30).height < B.rosetteHeight, `rosette is short (${at(30).height.toFixed(0)} cm)`);
 }

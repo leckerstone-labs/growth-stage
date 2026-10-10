@@ -240,7 +240,7 @@ export function createBrassicaModel(crop, { seed = DEFAULT_SEED } = {}) {
     const leaves = [];
     for (let n = 1; n <= N; n++) {
       const stemLeaf = n > NR;
-      const k = n - NR; // stem leaf number 1–8
+      const k = n - NR; // stem leaf number 1 … LEAVES.stem
       const e = K.vL - (n - 1); // > 0 visible, ≥ 1 unfolded
       let grow = e <= 0 ? 0 : 1 - Math.pow(1 - clamp(e / 3.2), 2);
       // Stem leaves expand as the internode above them extends, so the
@@ -251,7 +251,7 @@ export function createBrassicaModel(crop, { seed = DEFAULT_SEED } = {}) {
       const s = stemLeaf ? nodeS[k] : 0.03 * n;
       // Senescence: rosette leaves die bottom-up as new ones form; after
       // flowering the stem leaves yellow and fall, lowest first.
-      const th = ((k - 1) / 8) * 0.6;
+      const th = ((k - 1) / P.LEAVES.stem) * 0.6;
       let sen, drop;
       if (stemLeaf) {
         sen = smoothstep(th, th + 0.3, K.leafLoss);
@@ -263,7 +263,7 @@ export function createBrassicaModel(crop, { seed = DEFAULT_SEED } = {}) {
       // Posture (angle from vertical at the base): young leaves stand up in
       // the centre; grown rosette leaves spread out and lie flatter in winter.
       const jit = (hash('lp', n) - 0.5) * 10;
-      const mature = stemLeaf ? lerp(40, 55, k / 8) + jit : lerp(42, 82, K.habit) + jit;
+      const mature = stemLeaf ? lerp(40, 55, k / P.LEAVES.stem) + jit : lerp(42, 82, K.habit) + jit;
       let tilt = lerp(stemLeaf ? 28 : 12, mature, smoothstep(0.3, stemLeaf ? 1.8 : 1.4, e)) * DEG;
       // The youngest leaves fold in over the bud cluster until it shows.
       const young = 1 - smoothstep(1, 2.6, e);
