@@ -90,7 +90,7 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
         if (mesh.geometry.boundingBox) box.union(mesh.geometry.boundingBox);
       }
       if (E.top) box.expandByPoint(E.top);
-      const below = belowGround({ soil, mesh: plantMesh, box, depth: plant.K.roots - plant.main.seedling.seedY });
+      const below = belowGround({ soil, mesh: plantMesh, box, depth: plant.K.roots - plant.main.seedling.seedY, full: state.roots });
       rows.push(...below.rows);
       items.push(...below.items);
       goal = below.goal;

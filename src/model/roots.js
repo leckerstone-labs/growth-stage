@@ -180,13 +180,14 @@ const SYSTEMS = { fibrous, taproot };
 
 // spec: crop params ROOTS. st: depth and origins from the plant model.
 // opts: { clip: soil depth drawn (cm), minR: thinnest radius worth drawing
-// at the current zoom, stub: cap every root at this length (stem views) }.
+// at the current zoom, stub: cap every root at this length (stem views),
+// cap: the same, but nodules stay (plant view with the Roots toggle off) }.
 // Returns { roots: [{ kind, pts, r }], nodules: [{ p, r }], cut } where cut
 // says whether any root reaches the bottom of the soil shown.
-export function computeRoots(spec, st, { clip = 10, minR = 0, stub = 0 } = {}) {
+export function computeRoots(spec, st, { clip = 10, minR = 0, stub = 0, cap = 0 } = {}) {
   const out = { roots: [], nodules: [], cut: false };
   if (!spec || !(st.depth > 0)) return out;
-  const depth = stub ? Math.min(st.depth, stub) : st.depth;
+  const depth = Math.min(st.depth, stub || Infinity, cap || Infinity);
   const ctx = {
     clip, minR,
     nodules: !stub && spec.nodules ? spec.nodules : null,

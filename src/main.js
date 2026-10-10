@@ -39,7 +39,7 @@ function switchCrop(id) {
   if (sameKey && !target.stages.some((x) => x.code === gs)) {
     gs = [...target.stages].reverse().find((x) => x.code <= gs)?.code ?? gs;
   }
-  const q = new URLSearchParams({ crop: id, gs, view: state.mode });
+  const q = new URLSearchParams({ crop: id, gs, view: state.mode, roots: state.roots ? 1 : 0 });
   if (seed !== undefined) q.set('seed', seed);
   location.search = q.toString();
 }
@@ -144,7 +144,19 @@ const state = {
   prevWant: null,
   env: null, // stable framing state (see stableGoal)
   enteringMode: true,
+  roots: rootsAtStart(), // plant view: whole root system (true) or roots cut short
 };
+
+// Roots toggle (plant view). Off by default: roots cut short near the seed
+// and crown in a shallow soil block, so the plant fills the frame (see
+// src/views/below-ground.js). ?roots=1 or ?roots=0 in the URL wins (switching
+// crop passes it on); otherwise the viewer's last choice, kept in this
+// browser only.
+function rootsAtStart() {
+  const q = params.get('roots');
+  if (q === '1' || q === '0') return q === '1';
+  try { return localStorage.getItem('gs-roots') === '1'; } catch { return false; }
+}
 
 // The crop family's views (cereal or brassica) build the geometry and the
 // readout, labels and camera goal for each inspection view.
@@ -369,6 +381,24 @@ function resetView() { state.enteringMode = true; state.userZoom = 1; state.dirt
 $('reset').addEventListener('click', resetView);
 $('zoom-in').addEventListener('click', () => { state.userZoom = clamp(state.userZoom / 1.4, 0.08, 6); });
 $('zoom-out').addEventListener('click', () => { state.userZoom = clamp(state.userZoom * 1.4, 0.08, 6); });
+const rootsBtn = $('roots');
+function showRootsState() {
+  rootsBtn.setAttribute('aria-pressed', String(state.roots));
+  rootsBtn.title = state.roots ? 'Roots: whole root system shown (tap for short roots)' : 'Roots: cut short (tap to show the whole root system)';
+}
+showRootsState();
+rootsBtn.addEventListener('click', () => {
+  state.roots = !state.roots;
+  try { localStorage.setItem('gs-roots', state.roots ? '1' : '0'); } catch {}
+  showRootsState();
+  // Ease to the new framing (deeper or shallower soil) from where the camera
+  // is, keeping the user's rotation, zoom and pan: drop the stable-framing
+  // envelope (so the frame can shrink at once) and the small-change snap.
+  state.env = null;
+  state.prevGoal = null;
+  state.prevWant = null;
+  state.dirty = true;
+});
 
 // Double-tap (or double-click) the plant to reset the view. Done by hand
 // because touch browsers don't reliably send dblclick.
@@ -447,6 +477,7 @@ function rebuild() {
   const ib = $('inspect-btn');
   ib.hidden = cur.inspect === mode;
   ib.textContent = `Show ${INSPECT_VIEWS[cur.inspect].label.toLowerCase()} view`;
+  rootsBtn.hidden = mode !== 'plant'; // the other views show roots as stubs or not at all
   // The plant view's rooting depth has its own source.
   const srcKeys = mode === 'plant' && SOURCES.roots && !cur.sources.includes('roots') ? [...cur.sources, 'roots'] : cur.sources;
   $('sources').innerHTML = 'Source: ' + srcKeys.map((k) => `<a href="${SOURCES[k].url}" target="_blank" rel="noopener">${SOURCES[k].title}</a>`).join('; ');

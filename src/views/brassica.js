@@ -14,7 +14,7 @@ import { belowGround, belowGroundOther } from './below-ground.js';
 const V = (p) => new THREE.Vector3(p[0], p[1], p[2]);
 const pct = (x) => `${Math.round(x * 100)}%`;
 
-export function createBrassicaView({ crop, model, M, scene, soil }) {
+export function createBrassicaView({ crop, model, M, scene, soil, state }) {
   const { measureMain, tAt } = model;
   const mesh = new BrassicaMesh(M, crop);
   scene.add(mesh.group);
@@ -87,7 +87,7 @@ export function createBrassicaView({ crop, model, M, scene, soil }) {
       }
       if (t >= tAt(50) && t < tAt(60) && m.budPresent) items.push({ kind: 'label', p: new THREE.Vector3(0, m.budTop, 0), text: m.budsEnclosed ? 'Buds (hidden)' : 'Flower buds', tone: 'accent', side: 'right', dx: 70 });
       const box = mesh.bounds({ roots: false });
-      const below = belowGround({ soil, mesh, box, depth: K.roots - plant.seedling.seedY });
+      const below = belowGround({ soil, mesh, box, depth: K.roots - plant.seedling.seedY, full: state.roots });
       rows.push(...below.rows);
       items.push(...below.items);
       goal = below.goal;

@@ -6,14 +6,24 @@
 // deep, far deeper than the plant view can show, so the block deepens as
 // the plant grows instead.
 //
+// The Roots toggle (main.js, state.roots) chooses between that and a
+// reduced look, the default: every root cut short at SHORT_ROOTS cm (the
+// seed, radicle and first roots, as a seedling has them) in a shallow block,
+// so the plant fills the frame. Rooting depth is still in the readout.
+//
 // A crop family's view calls belowGround() for the plant view and
 // belowGroundOther() for every other view that shows the plant. The mesh
-// must have setRoots(opts) and rootSystem (see render/roots-mesh.js).
+// must have setRoots(opts) and rootSystem (see render/roots-mesh.js), and
+// rootArgs.st.seed (the seed's position) for the reduced look.
 
 import * as THREE from 'three';
 import { clamp } from '../model/interp.js';
 
 const OTHER_DEPTH = 9; // soil shown in the close-up views, cm
+// Roots toggle off: each root is drawn at most this long (cm). About the
+// rooting depth at emergence, so a seedling looks the same either way.
+const SHORT_ROOTS = 6;
+const SHORT_SOIL = 10; // soil shown with the toggle off, at least (cm)
 
 // Width of the drawn plant (box), largest horizontal extent.
 const widthOf = (box) => (box.isEmpty() ? 0 : Math.max(box.max.x - box.min.x, box.max.z - box.min.z));
@@ -81,13 +91,32 @@ export function rootReadout(system, depth, shown, { minR = 0 } = {}) {
 // camera goal. depth: real rooting depth (cm). minShown: soil to show at
 // least (cm), for a crop sown deep enough that its seed would otherwise sit
 // in the faded bottom of the block (field beans).
-export function belowGround({ soil, mesh, box, depth, minShown = 0 }) {
+// full: the Roots toggle (off: the reduced look, see belowGroundShort).
+export function belowGround({ soil, mesh, box, depth, minShown = 0, full = true }) {
+  if (!full) return belowGroundShort({ soil, mesh, box, depth });
   const shown = Math.max(soilDepthFor(box), minShown);
   soil.setDepth(shown);
   soil.setFull(false);
   const opts = rootOptions(box, shown);
   mesh.setRoots(opts);
   return { ...rootReadout(mesh.rootSystem, depth, shown, opts), goal: plantGoal(box, shown) };
+}
+
+// Plant view with the Roots toggle off: roots cut short near the seed and
+// crown, ending in a fine tip rather than fading out; a soil block just deep
+// enough for them, and framed down to the deepest drawn root, not the whole
+// block (which fades out below the frame).
+function belowGroundShort({ soil, mesh, box, depth }) {
+  const seedDepth = Math.max(0, -(mesh.rootArgs?.st?.seed?.[1] ?? 0));
+  const shown = Math.max(SHORT_SOIL, seedDepth + SHORT_ROOTS + 1.5);
+  soil.setDepth(shown);
+  soil.setFull(false);
+  // A clip far below the roots: no bottom fade.
+  mesh.setRoots({ clip: 1000, minR: rootOptions(box, shown).minR, cap: SHORT_ROOTS });
+  let low = seedDepth + 1;
+  for (const r of mesh.rootSystem.roots) for (const p of r.pts) low = Math.max(low, -p[1]);
+  const rows = depth > 0.05 ? [['Rooting depth (deepest roots)', depthText(depth)]] : [];
+  return { rows, items: [], goal: plantGoal(box, Math.min(shown, low + 0.8)) };
 }
 
 // Other views (close-ups): a shallow block; roots as the mesh builds them

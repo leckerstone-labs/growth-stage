@@ -54,7 +54,7 @@ export function drawRoots(batch, system, colours) {
 }
 
 // Rebuild a mesh's roots batch. args: { spec, st, stub, colours } saved by
-// the mesh's build (null: no roots in this view); opts: { clip, minR }.
+// the mesh's build (null: no roots in this view); opts: { clip, minR, cap }.
 // Returns the root system drawn (for labels and readouts).
 export function redrawRoots(batch, args, opts) {
   batch.reset();

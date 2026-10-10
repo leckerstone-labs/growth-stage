@@ -13,7 +13,7 @@ import { belowGround, belowGroundOther } from './below-ground.js';
 const V = (p) => new THREE.Vector3(p[0], p[1], p[2]);
 const pct = (x) => `${Math.round(x * 100)}%`;
 
-export function createLegumeView({ crop, model, M, scene, soil }) {
+export function createLegumeView({ crop, model, M, scene, soil, state }) {
   const { measureMain, tAt } = model;
   const P = crop.params;
   const mesh = new LegumeMesh(M, crop);
@@ -103,7 +103,7 @@ export function createLegumeView({ crop, model, M, scene, soil }) {
         items.push({ kind: 'label', p: V(r.pedEnd), text: r.enclosed ? 'Buds (hidden)' : 'Flower buds', tone: 'accent', side: 'right', dx: 70 });
       }
       const box = mesh.bounds({ roots: false });
-      const below = belowGround({ soil, mesh, box, depth: K.roots - S.seedY, minShown: clamp(P.SEED_DEPTH + 4 + 0.8 * S.rootLen, P.SEED_DEPTH + 10, 34) });
+      const below = belowGround({ soil, mesh, box, depth: K.roots - S.seedY, minShown: clamp(P.SEED_DEPTH + 4 + 0.8 * S.rootLen, P.SEED_DEPTH + 10, 34), full: state.roots });
       rows.push(...below.rows);
       items.push(...below.items);
       // Nodules: label one near the top of the roots once they show.
