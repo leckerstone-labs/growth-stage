@@ -26,8 +26,9 @@ export const LEAVES = {
   leaflets: [2, 2, 2, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 6, 5, 4, 4],
   // Final leaflet length, cm.
   len: [3.8, 4.6, 5.2, 5.8, 6.4, 7.0, 7.4, 7.8, 7.9, 7.9, 7.7, 7.4, 7.2, 6.8, 6.4, 5.8, 5.0, 4.3],
-  // Leaflet width as a fraction of its length (upper leaflets narrower).
-  width: [0.62, 0.6, 0.58, 0.56, 0.54, 0.52, 0.5, 0.5, 0.49, 0.48, 0.47, 0.46, 0.45, 0.44, 0.43, 0.42, 0.42, 0.42],
+  // Leaflet width as a fraction of its length: broad ovals, upper leaflets a
+  // little narrower.
+  width: [0.68, 0.67, 0.65, 0.63, 0.61, 0.59, 0.58, 0.57, 0.56, 0.55, 0.54, 0.53, 0.52, 0.51, 0.5, 0.5, 0.5, 0.5],
   // Leaf stalk (petiole) to the first leaflet pair, cm.
   petiole: [1.6, 2.0, 2.3, 2.6, 2.9, 3.2, 3.4, 3.6, 3.6, 3.6, 3.5, 3.4, 3.2, 3.1, 2.9, 2.6, 2.3, 2.1],
   spacing: 1.9, // cm along the rachis between leaflet pairs
@@ -61,27 +62,40 @@ export const SEED_SPREAD = 2.4;
 // A pod counts as ripe (BBCH 8x: "pods ripe and dark") once it is black.
 export const RIPE_SEED = 4.5;
 
-// Seed and pod colour states keyed by the `seed` channel.
+// Seed and pod colour states keyed by the `seed` channel. Pods: green and
+// downy, yellowing as the seed matures (hilum turning black), brown then
+// black as they ripen; the renderer adds patchy, seeded variation.
 export const SEEDS = [
-  { s: 0, size: 0.2, col: '#e9efd0', pod: '#7ea34c', hilum: '#d9dfb8' }, // ovules, flat pod
-  { s: 1, size: 0.6, col: '#cfe0a8', pod: '#77a046', hilum: '#c9d6a0' }, // expanding
-  { s: 2, size: 1, col: '#8db55a', pod: '#6e9944', hilum: '#a3bf78' }, // green, filling the pod
-  { s: 3, size: 1, col: '#b7c27a', pod: '#8c8a4c', hilum: '#2a2520' }, // full size, hilum black
-  { s: 4, size: 0.96, col: '#c6b27b', pod: '#4b3d2e', hilum: '#1d1a17' }, // pod blackening
-  { s: 5, size: 0.92, col: '#b99a6a', pod: '#201c19', hilum: '#141210' }, // black pod, seed dry and hard
+  { s: 0, size: 0.2, col: '#e9efd0', pod: '#86a463', hilum: '#d9dfb8' }, // ovules, flat pod
+  { s: 1, size: 0.6, col: '#cfe0a8', pod: '#7c9d58', hilum: '#c9d6a0' }, // expanding
+  { s: 2, size: 1, col: '#8db55a', pod: '#71954e', hilum: '#a3bf78' }, // green, filling the pod
+  { s: 3, size: 1, col: '#b7c27a', pod: '#a2a35c', hilum: '#2a2520' }, // full size, hilum black; pod yellowing
+  { s: 3.6, size: 0.98, col: '#c1b77a', pod: '#8a7a4a', hilum: '#221e1a' }, // pod yellow-brown
+  { s: 4.2, size: 0.96, col: '#c6b27b', pod: '#5a4635', hilum: '#1d1a17' }, // pod brown, blackening
+  { s: 4.8, size: 0.94, col: '#bfa673', pod: '#2f2823', hilum: '#161412' }, // pod nearly black
+  { s: 5.4, size: 0.92, col: '#b99a6a', pod: '#24211f', hilum: '#141210' }, // black pod, seed dry and hard
 ];
 
-// Colours (hex). Field bean leaves are a grey, glaucous green; dead leaves
-// and ripe stems and pods turn black.
+// Colours (hex). Field bean leaves are a grey, glaucous green, paler and
+// yellower at the shoot tip. Dying leaves go yellow, then brown, then dark
+// brown-black. Ripe stems go yellowish, brown, then dark grey-brown, not
+// jet black; ripe pods are dull black.
 export const COLOURS = {
-  leafYoung: '#89a77c',
-  leaf: '#6c8c70',
-  leafYellow: '#b9b462',
-  leafDead: '#2f2a25', // killed in ripening: black
-  leafDry: '#a88f62', // lower leaves shaded out during the season
+  leafYoung: '#97b383',
+  leaf: '#7a9b7c',
+  leafOld: '#66876b',
+  leafYellow: '#c3b866',
+  leafBrown: '#86694a',
+  leafDead: '#40352c', // dark brown
+  leafBlack: '#282421', // brown-black: killed in ripening
   petiole: '#8aa776',
-  stem: '#7d9d5b',
-  stemDark: '#2b2622',
+  stem: '#76a052',
+  stemPale: '#9cb873',
+  stemYellow: '#a7a467',
+  stemBrown: '#6e573e',
+  stemDark: '#54473a',
+  stemDarkest: '#3e352d',
+  stemGrey: '#8a8072', // weathered dead stem
   epicotyl: '#e6e2c4', // below ground, before greening
   scale: '#cfcca0',
   stipule: '#80a06a',
@@ -89,9 +103,12 @@ export const COLOURS = {
   calyx: '#88a65c',
   bud: '#93b067',
   petal: '#f7f5ef',
-  vein: '#8d6b8e',
-  blotch: '#191615',
+  petalFlush: '#f3e6e4', // faint pink-cream
+  vein: '#6f4f6a',
+  blotch: '#1c1513',
   petalWilt: '#8b6e4c',
+  podBlack: '#232122', // dull black with a grey bloom
+  podBrownBlack: '#33281f',
   seedCoat: '#c9b17f',
   seedHilum: '#1d1a17',
   root: '#ece2c8',

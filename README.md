@@ -72,7 +72,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Anthers ~1.6× thicker, ligule and auricles slightly larger than life.
 - Collar view bends the inspected blade back to expose the ligule, as you would in the field.
 - Oats: the ligule is drawn a little larger than life (about 4 mm).
-- Field beans: flowers about 1.15× life size, and in the Flowers and Pods views the leaves at the nodes being inspected are cut back to stubs so the racemes show (the readout says so).
+- Field beans: flowers about 1.15× life size, and in the Flowers and Pods views the leaves at the nodes being inspected (a fixed set of nodes per view) are drawn see-through so the racemes and pods show (the readout says so).
 - Plant view: roots of a large plant are drawn thicker than life, and only the top of the root system (down to the bottom of the soil block) is shown; the readout says so and gives the real rooting depth.
 
 ### Winter barley (two-row)
@@ -128,7 +128,9 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Square, hollow stem; alternate leaves in two ranks; paripinnate leaves with no tendril, two leaflets on the first leaves rising to six; stipules with a dark nectary spot.
 - Principal stages overlap; the most advanced is recorded. Spring beans: leaf checkpoints GS10–GS16, then bud stages from GS50. Winter beans overwinter at about three leaves (GS13) and grow two basal side shoots in spring (GS21, GS22). Extended internodes (GS3x) are a readout.
 - A short raceme in each leaf axil from leaf 7 (spring) or leaf 6 (winter) up: estimates, as no UK first-flowering-node figure was found. White flowers with purple-veined standards and black-blotched wings open from the lowest node up; the BBCH raceme counts (GS61/63/65) are counted from the model. Only the lowest flowers of the lowest six or seven nodes set pods (1–2 per node); the rest drop.
-- Pods lengthen lowest first (GS7x), are held up when young and swing out as they fill, then blacken from the bottom up (GS8x). Seeds go from green to buff with a black hilum. Leaves die and blacken from the bottom; stems darken last (GS9x).
+- Pods lengthen lowest first (GS7x), stand up when young and swing out and down as they fill, then ripen from the bottom up (GS8x): green and downy, yellowing, brown in patches, then dull black, shrunk round the seeds. Seeds go from green to buff with a black hilum. Leaves die from the bottom up: yellow, then brown, then dark brown-black, curling as they dry; most fall and lie on the soil (early ones rot away), the top few hang on. Stems yellow, then turn brown to dark grey-brown from the base, streaky (GS9x), and the ripe plant leans a little.
+- Every leaf varies a little (seeded): turn round the stem, stalk length and angle, size, the set of each leaflet, tint; young leaves at the tip are paler and folded.
+- Continuity: every leaf grows from a tiny folded bud at the apex, fading flowers shrivel (the pollinated ones while the young pod grows out of them), and dead leaves fall rather than vanish, so no part pops in or out between stages.
 - Spring: one stem, about 85 cm, 12 pods. Winter: three stems, about 105 cm, 18 pods. Heights, leaf and pod sizes and pods per node are illustrative.
 
 ## Installable app (PWA)

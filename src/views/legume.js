@@ -48,12 +48,14 @@ export function createLegumeView({ crop, model, M, scene, soil }) {
     setSection(M, false);
     setGhost(M, false);
     if (mode !== 'seed') {
-      // Flowers and pods views: leaves at the nodes being inspected are cut
-      // back to stubs so the racemes in their axils show.
-      const lo = P.FLOWERING.first, hiPods = lo + P.PODS.perNode.length - 1;
-      const trim = mode === 'flowers' ? (L) => L.n >= lo && main.racemes.some((r) => r.n === L.n && r.flowers.some((f) => f.state === 'open' || f.state === 'pod'))
-        : mode === 'pods' ? (L) => L.n <= hiPods + 1 : null;
-      mesh.build(plant, { mode, trim });
+      // Flowers and pods views: leaves at the nodes being inspected are drawn
+      // see-through so the racemes and pods in their axils show. The rule
+      // is fixed per view (the flowering nodes, or the pod nodes), so the
+      // same leaves are see-through at every stage.
+      const lo = P.FLOWERING.first, hiFl = lo + P.FLOWERING.flowers.length - 1, hiPods = lo + P.PODS.perNode.length - 1;
+      const ghost = mode === 'flowers' ? (L) => L.n >= lo && L.n <= hiFl
+        : mode === 'pods' ? (L) => L.n >= lo - 2 && L.n <= hiPods + 1 : null;
+      mesh.build(plant, { mode, ghost });
       soil.group.visible = true;
       if (mode !== 'plant') belowGroundOther({ soil, mesh });
     } else {
@@ -122,7 +124,8 @@ export function createLegumeView({ crop, model, M, scene, soil }) {
       main.scaleS.forEach((s, i) => items.push({ kind: 'tag', p: axisPt(s).add(new THREE.Vector3(i ? -0.5 : 0.5, 0, 0.3)), text: 'S', tone: 'muted' }));
       for (const L of main.leaves) {
         if (L.e < 0.15) continue;
-        const p = V(L.rachis[Math.min(3, L.rachis.length - 1)]);
+        // A fallen leaf is counted at its node (tag moves there as it falls).
+        const p = V(L.rachis[Math.min(3, L.rachis.length - 1)]).lerp(V(L.node).add(V(L.out).multiplyScalar(0.8)), clamp(L.fallK * 4));
         items.push({ kind: 'tag', p, text: L.unfolded ? `${L.n}` : `${L.n}?`, tone: L.unfolded ? (L.sen > 0.5 ? 'muted' : 'ok') : 'muted' });
       }
       const nxt = main.leaves.find((L) => !L.unfolded && L.e > 0.15);
@@ -147,7 +150,7 @@ export function createLegumeView({ crop, model, M, scene, soil }) {
       rows.push(['First flowering node', `leaf ${P.FLOWERING.first}`]);
       if (m.openNow) rows.push(['Flowers open now (main stem)', `${m.openNow}`]);
       if (m.pods) rows.push(['Pods set so far', `${m.pods}`]);
-      if (m.racemesFlowered || m.budsVisible) rows.push(['Drawing', 'leaves at flowering nodes trimmed to stubs; flowers a little larger than life']);
+      if (m.racemesFlowered || m.budsVisible) rows.push(['Drawing', 'leaves at flowering nodes see-through; flowers a little larger than life']);
       // Labels.
       const fl = main.racemes.flatMap((r) => r.flowers.map((f) => ({ r, f })));
       const open = fl.filter(({ f }) => f.state === 'open' && f.wilt < 0.4);
@@ -182,7 +185,7 @@ export function createLegumeView({ crop, model, M, scene, soil }) {
       if (pods.length) rows.push(['Lowest pod', `${pods[0].len.toFixed(1)} cm long`]);
       if (K.seed >= 2) rows.push(['Pods ripe and black (main stem)', pct(m.podsBlack), m.podsBlack >= 0.9 ? 'ok' : '']);
       if (m.podsPlant) rows.push(['Seeds per pod', `${(m.seedsPlant / m.podsPlant).toFixed(1)}`]);
-      rows.push(['Drawing', 'main stem only; leaves at the pod nodes trimmed to stubs']);
+      rows.push(['Drawing', 'main stem only; leaves at the pod nodes see-through']);
       const black = pods.filter((p) => p.ripe);
       const green = pods.filter((p) => !p.ripe && p.size >= 0.99);
       const growing = pods.filter((p) => p.size < 0.99);

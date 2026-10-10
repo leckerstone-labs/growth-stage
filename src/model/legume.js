@@ -77,7 +77,7 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
       id: `S${j + 1}`,
       az: def.az + v.jitter(0.35),
       angle: def.angle + v.jitter(5),
-      top: v.range(3, 9),
+      top: v.range(1, 5),
       bend: 9 * v.factor(0.3),
       lag: def.lag + v.jitter(0.3),
       start: def.start + v.jitter(0.12),
@@ -104,52 +104,100 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
     return ints;
   }
 
+  // ---- Natural variation of each leaf ---------------------------------------
+  // Drawn once per leaf from the plant's seed (src/model/random.js) and kept,
+  // so the same leaf looks the same at every stage: its turn round the stem,
+  // stalk length and angle, size, the set of each leaflet, its tint and how
+  // it dies. Visual only: no stage count depends on these numbers, so the
+  // main stem gets them too.
+  const leafVarCache = new Map();
+  // How far (and which way) the ripening plant leans: seeded, a few degrees.
+  const leanV = variation(seed, crop.id, 'lean');
+  const leanMax = leanV.range(4, 9) * DEG;
+  const leanAz = leanV.range(0, Math.PI * 2);
+  function leafVar(spec, n) {
+    const key = `${spec.id}:${n}`;
+    let v = leafVarCache.get(key);
+    if (v) return v;
+    const r = variation(seed, crop.id, spec.id, 'leaf', n);
+    v = {
+      az: r.jitter(0.3), ang: r.jitter(9), pet: r.factor(0.14), size: r.factor(0.07), width: r.factor(0.07),
+      elev: r.range(6, 30), spread: r.range(52, 72), droop: r.range(0.12, 0.4), arch: r.range(0.1, 0.35),
+      tint: r.jitter(1), sen: r.jitter(0.8), hang: r.u(), fall: r.range(1, 3.5), fallAz: r.jitter(0.8),
+      litter: r.u(), spin: r.jitter(0.6), patch: r.u() * 10,
+      leaflets: [],
+    };
+    for (let j = 0; j < 8; j++) {
+      v.leaflets.push({
+        len: r.factor(0.07), width: r.factor(0.09), spread: r.jitter(10), elev: r.jitter(12), roll: r.jitter(0.35),
+        vfold: r.range(0.12, 0.42), curl: r.u(), shift: r.jitter(0.12), twist: r.jitter(0.25), die: r.jitter(0.12),
+      });
+    }
+    leafVarCache.set(key, v);
+    return v;
+  }
+
   // ---- One stem: leaves, stipules, racemes, flowers and pods --------------
   // axis: the stem's centre line; nodeS: s of each true-leaf node; tipS: top
   // of the stem; vL: its leaf clock; K: its key states (lagged for shoots).
   function computeStem(spec, K, vL, axis, nodeS, tipS, ints, radius) {
     const leaves = [];
+    const UPV = [0, 1, 0];
     for (let n = 1; n <= spec.leaves; n++) {
       const row = leafOf(spec, n) - 1;
-      const e = vL - (n - 1); // > 0 visible, ≥ 1 unfolded
-      if (e <= -0.6) break;
+      const e = vL - (n - 1); // > -1 growing in the apex, ≥ 1 unfolded
+      if (e <= -1) break;
+      const lv = leafVar(spec, n);
       const s = nodeS[n - 1];
       const a = axis.at(s);
-      const az = spec.az0 + n * Math.PI + n * 0.06 + (hash(spec.id, 'az', n) - 0.5) * 0.4;
+      const az = spec.az0 + n * Math.PI + n * 0.06 + lv.az;
       const radial = [Math.cos(az), 0, Math.sin(az)];
       const out = tilt(a.t, radial, Math.PI / 2);
-      const base = add(a.p, out, radius(s) * 0.9);
-      const grow = e <= 0 ? lerp(0.08, 0.14, clamp(e + 0.6)) : lerp(0.14, 1, 1 - Math.pow(1 - clamp(e / 2.4), 2));
-      const unfold = smoothstep(0.15, 1.0, e);
-      // Senescence: lower leaves die as the canopy closes above them; in
-      // ripening the rest die (and blacken) from the bottom up. The lowest
-      // leaves fall; the upper ones hang on, black and shrivelled.
-      const th = ((n - 1) / spec.leaves) * 0.7;
-      const shaded = smoothstep(n + 9, n + 12, vL); // lower leaves shaded out
-      const killed = smoothstep(th, th + 0.25, K.leafLoss); // ripening: leaves blacken
+      const node = add(a.p, out, radius(s) * 0.9);
+      // A leaf starts as a tiny folded bud in the apex and grows smoothly:
+      // about a fifth of its size as its leaflets part (e = 0), three-fifths
+      // when unfolded (e = 1), full size a couple of leaves later.
+      const grow = smoothstep(-1, 2.6, e);
+      const unfold = smoothstep(0.1, 1.0, e);
+      // Senescence. Lower leaves yellow and die as the canopy closes above
+      // them; in ripening the rest die from the bottom up (leafLoss). A dead
+      // leaf goes yellow, then brown, then dark brown-black, its leaflets
+      // curling as they dry. Most dead leaves then fall to the ground (and
+      // lie there); the top few, and a few others, hang on, shrivelled.
+      const sh0 = n + 9 + lv.sen;
+      const shaded = smoothstep(sh0, sh0 + 3, vL);
+      const th = ((n - 1) / spec.leaves) * 0.7 + lv.sen * 0.03;
+      const killed = smoothstep(th, th + 0.25, K.leafLoss);
       const sen = Math.max(shaded, killed);
-      const drop = n <= spec.leaves * 0.55 ? Math.max(smoothstep(n + 12, n + 13, vL), smoothstep(th + 0.28, th + 0.36, K.leafLoss)) : 0;
-      const shrivel = smoothstep(0.55, 1, sen);
-      // Posture: angle of the leaf stalk from the stem; young leaves stand
-      // up close to the tip, grown ones spread; dying ones droop.
-      const jit = (hash(spec.id, 'lp', n) - 0.5) * 12;
-      const mature = lerp(58, 42, n / spec.leaves) + jit;
-      const ang = (lerp(8, mature, smoothstep(0.1, 1.6, e)) + 45 * smoothstep(0.3, 1, sen)) * DEG;
+      const hangs = n > spec.leaves * 0.85 || (n > spec.leaves * 0.5 && lv.hang < 0.18);
+      const dropShaded = smoothstep(sh0 + 3.1, sh0 + 4.6, vL);
+      const drop = hangs ? 0 : Math.max(dropShaded, smoothstep(th + 0.28, th + 0.5, K.leafLoss));
+      // Leaves that fell early (shaded out mid-season) rot away on the soil.
+      const rot = hangs ? 0 : smoothstep(sh0 + 4.6, sh0 + 8.5, vL);
+      const shrivel = smoothstep(0.5, 1, sen);
+      const limp = smoothstep(0.35, 1, sen); // stalk and leaflets sag as the leaf dies
+      // Posture: angle of the leaf stalk from the stem. Young leaves stand up
+      // close to the tip, grown ones spread (lower ones wider); dying ones
+      // sag; a leaf about to fall hangs down along the stem.
+      const mature = lerp(68, 46, n / spec.leaves) + lv.ang;
+      const hangDown = smoothstep(0, 0.3, drop);
+      const ang = (lerp(5, mature, smoothstep(0.1, 1.6, e)) + 38 * limp + 35 * hangDown) * DEG;
       const dir0 = tilt(a.t, out, ang);
-      const droop = (0.25 + 0.6 * shrivel) * smoothstep(0.5, 2, e);
+      const droop = (lv.droop + 0.7 * shrivel + 0.8 * hangDown) * smoothstep(0.5, 2, e);
       // Rachis: petiole to the first leaflet pair, then a pair every
-      // `spacing` cm, ending in a short point (no tendril).
+      // `spacing` cm, ending in a short point (no tendril). It arches up a
+      // little before the leaflets weigh it down.
       const nl = L.leaflets[row];
       const pairs = Math.ceil(nl / 2);
-      const sc = grow * spec.scale * (1 - 0.25 * shrivel);
-      const pet = L.petiole[row] * sc;
+      const sc = grow * spec.scale * lv.size * (1 - 0.18 * shrivel);
+      const pet = L.petiole[row] * sc * lv.pet;
       const sp = L.spacing * sc * lerp(0.35, 1, unfold);
-      const rachisLen = pet + (pairs - 1) * sp + 0.5 * sc;
+      const rachisLen = pet + (pairs - 1) * sp + 0.6 * sc;
       const SEG = 8;
-      const rachis = [base];
-      let p = base, d = dir0;
+      let rachis = [node];
+      let p = node, d = norm(add(dir0, UPV, lv.arch * unfold * (1 - limp)));
       for (let i = 0; i < SEG; i++) {
-        d = norm(add(d, [0, -droop * 0.25, 0]));
+        d = norm(add(d, [0, -droop * 0.25 - lv.arch * unfold * (1 - limp) * 0.12, 0]));
         p = add(p, d, rachisLen / SEG);
         rachis.push(p);
       }
@@ -158,37 +206,86 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
         const i = Math.min(SEG - 1, Math.floor(x));
         return { p: mixv(rachis[i], rachis[i + 1], x - i), t: norm(sub(rachis[i + 1], rachis[i])) };
       };
-      const side = norm(cross(dir0, [0, 1, 0]));
+      // Sideways across the leaf (stable even while the young leaf stands
+      // straight up against the stem).
+      const across = norm(cross(a.t, out));
       const leaflets = [];
       const llen = L.len[row] * sc;
       for (let j = 0; j < nl; j++) {
+        const fv = lv.leaflets[j];
         const pair = Math.floor(j / 2);
         const sgn = j % 2 ? 1 : -1;
-        const q = pet + pair * sp + (j % 2) * 0.3 * sc;
+        // Leaflets are sub-opposite: the second of a pair a little further on.
+        const q = pet + pair * sp + (j % 2 ? 0.22 + fv.shift : 0) * sc * unfold;
         const r = rAt(q);
-        // Leaflets angle forward along the rachis; folded together while
-        // the leaf is young, spread flat once unfolded.
-        const spread = lerp(6, 52 + (hash(spec.id, 'lf', n, j) - 0.5) * 14, unfold) * DEG;
-        const sv = side.map((x) => x * sgn);
-        let ld = norm(add(r.t.map((x) => x * Math.cos(spread)), sv, Math.sin(spread)));
-        ld = norm(add(ld, [0, (0.3 - 0.7 * shrivel) * unfold + 0.25 * (1 - unfold), 0]));
-        let nrm = norm(cross(ld, sv.map((x) => -x * sgn)));
-        if (nrm[1] < 0) nrm = nrm.map((x) => -x);
-        // Each leaflet is rolled a little, outer edge up, so a pair forms a
-        // shallow V along the rachis.
-        nrm = norm(add(nrm, sv, -0.45 * unfold));
+        const sv = across.map((x) => x * sgn);
+        // Heading: forward along the rachis and out to the side, spreading
+        // as the leaf unfolds.
+        const spread = lerp(4, lv.spread + fv.spread, unfold) * DEG;
+        const ld0 = norm(add(r.t.map((x) => x * Math.cos(spread)), sv, Math.sin(spread)));
+        const hz = norm(add([ld0[0], 0, ld0[2]], [out[0], 0, out[2]], 0.12));
+        // Elevation above horizontal: young leaflets stand up, folded
+        // together round the tip; grown ones are held up at 15–40°, the
+        // distal pair a little higher; dying ones hang.
+        let elev = lerp(78, lv.elev + fv.elev + 6 * (pair / Math.max(1, pairs - 1)), unfold);
+        elev -= (60 + 25 * fv.curl) * limp + 25 * hangDown;
+        const el = elev * DEG;
+        const ld = norm(add(hz.map((x) => x * Math.cos(el)), UPV, Math.sin(el)));
+        // Blade normal: up from the leaflet, rolled about its midrib (outer
+        // edge a little up or down) and twisted at random.
+        const ac = norm(cross(UPV, hz));
+        const n0 = norm(cross(ld, ac));
+        const roll = (fv.roll + 0.18 * sgn) * unfold + fv.twist * limp;
+        const nrm = norm(add(n0.map((x) => x * Math.cos(roll)), ac, Math.sin(roll)));
+        // Distal pairs a little larger than the lowest pair.
+        const pairF = pairs > 1 ? lerp(0.86, 1.04, pair / (pairs - 1)) : 1;
         leaflets.push({
           p: r.p, dir: ld, n: nrm, side: sgn,
-          len: llen * (0.92 + 0.12 * hash(spec.id, 'll', n, j)) * (pair === pairs - 1 && nl > 2 ? 0.95 : 1),
-          width: llen * L.width[row] * (1 - 0.4 * shrivel),
-          fold: Math.max(1 - unfold, 0.8 * shrivel),
+          len: llen * fv.len * pairF,
+          width: llen * L.width[row] * lv.width * fv.width,
+          // fold: halves closed face to face (young); vfold: the shallow V of
+          // a grown leaflet; curl: edges rolled in as it dries.
+          fold: 1 - unfold,
+          vfold: fv.vfold,
+          curl: clamp(shrivel * (0.75 + 0.35 * fv.curl)),
+          // Local senescence: leaflets die a little out of step.
+          sen: clamp(sen + fv.die * smoothstep(0.05, 0.4, sen) * (1 - smoothstep(0.85, 1, sen))),
         });
       }
-      const tip = rachis[SEG];
+      // A falling leaf breaks off at the node and drops to the soil beside
+      // the plant, where it lies (dead leaves litter the ground under a
+      // ripening bean crop).
+      const fallK = smoothstep(0.3, 1, drop);
+      let tip = rachis[SEG];
+      if (fallK > 0) {
+        const faz = az + lv.fallAz;
+        const dest = [node[0] + Math.cos(faz) * lv.fall, 0.1 + 0.25 * lv.litter, node[2] + Math.sin(faz) * lv.fall];
+        const cs = Math.cos(lv.spin * fallK), sn = Math.sin(lv.spin * fallK);
+        const fall = (q) => {
+          const rel = sub(q, node);
+          // Lying flat, turned a little.
+          const flat = [(rel[0] * cs - rel[2] * sn) * 0.95, rel[1] * 0.05, (rel[0] * sn + rel[2] * cs) * 0.95];
+          const out = mixv(q, add(dest, flat), fallK);
+          out[1] = Math.max(out[1], 0.05 + 0.1 * fallK);
+          return out;
+        };
+        const flatDir = (v) => mixv(v, norm([v[0], v[1] * 0.1, v[2]]), fallK);
+        rachis = rachis.map(fall);
+        tip = rachis[SEG];
+        for (const f of leaflets) {
+          f.p = fall(f.p);
+          f.dir = norm(flatDir(f.dir));
+          f.n = norm(mixv(f.n, UPV, fallK * 0.85));
+          // On the ground the dry leaflets curl and shrink, and rot away.
+          const k = lerp(1, 0.65, fallK) * (1 - rot);
+          f.len *= k; f.width *= k; f.curl = clamp(f.curl + 0.3 * fallK);
+        }
+      }
       leaves.push({
-        n, s, az, e, base, dir: dir0, out, unfolded: e >= 1, present: drop < 0.5,
-        grow, unfold, sen, drop, shrivel, black: killed >= shaded, rachis, leaflets, tip,
-        stipule: L.stipule * spec.scale * lerp(0.35, 1, smoothstep(-0.5, 1, e)),
+        n, s, az, e, base: node, node, dir: dir0, out, unfolded: e >= 1, present: rot < 0.97, rot,
+        grow, unfold, sen, drop, fallK, fallen: fallK >= 0.999, shrivel, tint: lv.tint, patch: lv.patch,
+        black: killed >= shaded, rachis, leaflets, tip,
+        stipule: L.stipule * spec.scale * lerp(0.05, 1, smoothstep(-1, 1, e)),
       });
     }
 
@@ -217,7 +314,13 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
       for (let j = 0; j < nf; j++) {
         const aj = a - (0.6 * j) / Math.max(1, nf - 1);
         const setsPod = j < setHere;
-        const fan = ((j - (nf - 1) / 2) * 24 + (hash(spec.id, 'fa', k, j) - 0.5) * 16) * DEG;
+        // Life of a flower, in flowering nodes of age: bud (aj < 0), open,
+        // fading from W0 (pollinated flowers fade first), then the withered
+        // flower shrivels: one that sets a pod stays on the young pod's
+        // base for a while; the others drop.
+        const W0 = setsPod ? D - 1.55 : D - 0.9;
+        const end = setsPod ? W0 + 3.4 : W0 + 2.2;
+        const fan = ((j - (nf - 1) / 2) * 26 + (hash(spec.id, 'fa', k, j) - 0.5) * 18) * DEG;
         // Flowers face out from the stem, fanned round it a little.
         const c = Math.cos(fan), sn = Math.sin(fan);
         const horiz = norm([out[0] * c - out[2] * sn, 0, out[0] * sn + out[2] * c]);
@@ -229,33 +332,39 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
           f.petals = smoothstep(-0.7, -0.2, aj); // white petal tip showing
           f.dir = norm(add(pd, ax.t, 0.8));
           f.dir = norm(add(f.dir, horiz, 0.4 * sep));
-        } else if (setsPod ? aj < D - 1 : aj < D + 0.8) {
+        } else if (aj < end) {
           f.state = 'open';
           f.open = smoothstep(0, 0.45, aj);
-          f.wilt = smoothstep(D - 1, D + 0.3, aj);
-          f.dir = norm(add(horiz, [0, -0.28 - 0.5 * f.wilt, 0]));
-        } else if (setsPod) {
-          f.state = 'pod';
+          f.wilt = smoothstep(W0, W0 + 1.1, aj);
+          f.shrink = 1 - smoothstep(W0 + 0.9, end, aj); // 1 … 0 as it shrivels and drops
+          f.dir = norm(add(horiz, [0, -0.28 - 0.5 * f.wilt - (hash(spec.id, 'fd', k, j) - 0.5) * 0.3, 0]));
         } else {
-          f.state = 'gone';
+          f.state = setsPod ? 'pod' : 'gone';
         }
         if (setsPod) {
           const x = (slot + 0.5) / nSlots;
           slot++;
-          if (f.state === 'pod') {
+          // The young pod grows out of the fading flower.
+          const setAge = smoothstep(W0 + 0.5, W0 + 2.4, aj);
+          if (setAge > 0) {
             const size = Math.max(0.08, clamp(1 - (x - K.podFull) / 0.5));
             const sd = size > 0.4 ? seedAt(K, x) : 0;
-            // Pods angle up when young and swing out and down as they fill.
-            const pitch = lerp(55, -12, smoothstep(0.6, 2.6, sd)) * DEG + (hash(spec.id, 'pp', k, j) - 0.5) * 0.3;
-            const pdir = norm(add(horiz.map((v) => v * Math.cos(pitch)), [0, Math.sin(pitch), 0]));
-            const fin = lerp(P.PODS.len[0], P.PODS.len[1], x) * spec.scale;
+            // Pods stand up when young and swing out and down as they fill,
+            // each to its own angle.
+            const pv = hash(spec.id, 'pp', k, j);
+            const pitch = lerp(52 + 14 * pv, -8 - 38 * pv, smoothstep(0.6, 2.8, sd)) * DEG;
+            const yaw = (hash(spec.id, 'py', k, j) - 0.5) * 0.5;
+            const hy = norm([horiz[0] * Math.cos(yaw) - horiz[2] * Math.sin(yaw), 0, horiz[0] * Math.sin(yaw) + horiz[2] * Math.cos(yaw)]);
+            const pdir = norm(add(hy.map((v) => v * Math.cos(pitch)), [0, Math.sin(pitch), 0]));
+            const fin = lerp(P.PODS.len[0], P.PODS.len[1], x) * spec.scale * (0.94 + 0.12 * hash(spec.id, 'pl', k, j));
             const pod = {
-              stem: spec.id, k, j, x, at, dir: pdir, size,
-              len: fin * lerp(0.12, 1, size), finalLen: fin,
-              r: P.PODS.r * spec.scale * lerp(0.3, 1, smoothstep(0.05, 0.8, size)),
+              stem: spec.id, k, j, x, at, dir: pdir, size, setAge,
+              len: fin * lerp(0.12, 1, size) * lerp(0.04, 1, setAge), finalLen: fin,
+              r: P.PODS.r * spec.scale * lerp(0.3, 1, smoothstep(0.05, 0.8, size)) * lerp(0.25, 1, setAge),
               seed: sd, ripe: sd >= P.RIPE_SEED,
               seeds: P.PODS.seeds[(slot - 1) % P.PODS.seeds.length],
-              cap: 1 - smoothstep(D, D + 2.5, aj), // wilted corolla on the tip
+              bend: (hash(spec.id, 'pb', k, j) - 0.3) * 0.5, // curve of the pod
+              v: hash(spec.id, 'pv', k, j), // colour and patchiness
             };
             f.pod = pod;
             pods.push(pod);
@@ -283,7 +392,7 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
     let s = scaleS[1];
     for (let i = 0; i < N; i++) { s += ints[i]; nodeS.push(s); }
     let lastVisible = -1;
-    for (let i = 0; i < N; i++) if (vL - i > -0.6) lastVisible = i;
+    for (let i = 0; i < N; i++) if (vL - i > -1) lastVisible = i;
     const tipS = Math.max(epi, lastVisible >= 0 ? nodeS[lastVisible] + 0.35 : epi);
     // Stem half-width: thin below ground, thickening as each internode
     // lengthens; tapering towards the top.
@@ -313,7 +422,17 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
         pts.push(p);
       }
     } else {
-      pts.push([0, seedY + Math.max(tipS, 0.05), 0]);
+      // Once the pods fill, the heavy stem leans a little (beans are prone to
+      // lodging), bending gradually from the base.
+      const lean = leanMax * smoothstep(tAt(75), 100, t);
+      const H = Math.max(tipS, 0.05);
+      const NS = lean > 0.001 ? 12 : 1;
+      for (let i = 1; i <= NS; i++) {
+        const q = (H * i) / NS;
+        const above = Math.max(0, q - SD);
+        const off = Math.sin(lean) * above * above / Math.max(1, H - SD);
+        pts.push([Math.cos(leanAz) * off, seedY + q - (1 - Math.cos(lean)) * above * 0.5, Math.sin(leanAz) * off]);
+      }
     }
     const axis = polyAxis(pts);
     const hookTop = Math.max(...pts.map((p) => p[1]));
@@ -323,8 +442,8 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
     // ---- Basal side shoots ----------------------------------------------------
     const branches = [];
     for (const def of branchSpecs) {
-      const vLb = clamp((vL - def.start) * def.rate, 0, def.leaves);
-      if (vL < def.start) continue;
+      const vLb = clamp((vL - def.start) * def.rate, -1, def.leaves);
+      if (vLb <= -1) continue; // its first leaf starts in the bud below ground
       // The lag closes up by harvest: all stems are dead and dry together.
       const Kb = keyframes(Math.max(0, t - def.lag * (1 - smoothstep(93, 100, t))));
       const bInts = internodes(def, vLb);
@@ -340,9 +459,9 @@ export function createLegumeModel(crop, { seed = DEFAULT_SEED } = {}) {
       let q = s0;
       for (let i = 0; i < def.leaves; i++) { q += bInts[i]; bNodeS.push(q); }
       let lv = -1;
-      for (let i = 0; i < def.leaves; i++) if (vLb - i > -0.6) lv = i;
+      for (let i = 0; i < def.leaves; i++) if (vLb - i > -1) lv = i;
       const bTip = Math.max(s0 + 0.2, lv >= 0 ? bNodeS[lv] + 0.3 : s0 + 0.2);
-      const bAxis = leaningAxis(base, az, def.angle * DEG, def.top * DEG, bTip + 1, def.bend);
+      const bAxis = leaningAxis(base, az, def.angle * DEG, (def.top + 4 * smoothstep(tAt(75), 100, t)) * DEG, bTip + 1, def.bend);
       const bTop = bNodeS[def.leaves - 1];
       const bRadius = (x) => Math.max(0.08, lerp(P.STEM.base * 0.85, P.STEM.top, clamp(x / (bTop + 5))) * def.scale * lerp(0.4, 1, smoothstep(0, 6, vLb)));
       const stem = computeStem(def, Kb, vLb, bAxis, bNodeS, bTip, bInts, bRadius);
