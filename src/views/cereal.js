@@ -10,6 +10,7 @@ import { setSection, setGhost } from '../render/materials.js';
 import { PlantMesh } from '../render/plant-mesh.js';
 import { EarMesh } from '../render/ear-mesh.js';
 import { GrainView, grainStateText } from '../render/grain-view.js';
+import { belowGround, belowGroundOther } from './below-ground.js';
 
 export function createCerealView({ crop, model, M, scene, soil, state }) {
   const { measureMain, tAt } = model;
@@ -34,13 +35,15 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
 
     if (mode !== 'grain') {
       plantMesh.build(plant, { mode });
+      // Soil and roots: the plant view sizes them from the plant (below).
+      if (mode !== 'plant') belowGroundOther({ soil, mesh: plantMesh });
       const ears = (mode === 'plant' ? plant.shoots : [ms])
         .filter((sh) => sh.earLen > 0.05)
         .map((sh) => ({ sh, axis: plantMesh.axes.get(sh.id) }));
       earMesh.build(plant, ears, { variant: state.variant });
       setSection(M, mode === 'stem');
       setGhost(M, boot);
-      soil.group.visible = mode !== 'stem';
+      soil.group.visible = true;
       // Tall shoots are widened in the stem view so nodes stay legible.
       const widen = mode === 'stem' ? clamp((Math.max(ms.earTop, ms.nodeS[4]) + 4) / 6, 1, 4) : 1;
       state.widen = widen;
@@ -77,15 +80,14 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
         if (SL.present.crownRoots || t >= tAt(11)) items.push({ kind: 'label', p: SL.crown, text: SL.present.crownRoots ? 'Crown (crown roots starting)' : 'Crown forming', tone: 'muted', side: 'left', dx: 80, dy: -6 });
       }
       const box = new THREE.Box3();
-      for (const mesh of [plantMesh.blades.mesh, plantMesh.sheaths.mesh, plantMesh.roots.mesh]) {
+      for (const mesh of [plantMesh.blades.mesh, plantMesh.sheaths.mesh]) {
         if (mesh.geometry.boundingBox) box.union(mesh.geometry.boundingBox);
       }
       if (E.top) box.expandByPoint(E.top);
-      box.min.y = Math.max(box.min.y, -7);
-      box.max.y = Math.max(box.max.y, 1);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-      goal = { target: new THREE.Vector3(0, center.y, 0), height: Math.max(size.y * 1.08 + 1, 4.5), width: Math.max(Math.max(size.x, size.z) * 1.05 + 1, 4.5), dir: new THREE.Vector3(0.3, 0.16, 1) };
+      const below = belowGround({ soil, mesh: plantMesh, box, depth: plant.K.roots - plant.main.seedling.seedY });
+      rows.push(...below.rows);
+      items.push(...below.items);
+      goal = below.goal;
     } else if (mode === 'stem') {
       const nodes = A.nodes;
       let lastShown = 0;

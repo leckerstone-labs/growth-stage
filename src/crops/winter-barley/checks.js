@@ -9,7 +9,7 @@
 export function checks({ at, plantAt, expect, SEED_DEPTH }) {
   // Germination and leaf production.
   let p = plantAt(5);
-  expect(5, p.main.seedling.coleoLen === 0 && p.main.seedling.seminalLen > 0, 'radicle only, no coleoptile');
+  expect(5, p.main.seedling.coleoLen === 0 && p.main.seedling.rootDepth > 0, 'radicle only, no coleoptile');
   p = plantAt(7);
   expect(7, p.main.seedling.coleoLen > 0 && -SEED_DEPTH + p.main.seedling.coleoLen < -0.5, 'coleoptile out of seed, below surface');
   p = plantAt(9);

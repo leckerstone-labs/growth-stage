@@ -142,6 +142,9 @@ export class EarMesh {
   // shoots: [{ sh, axis }]
   build(plant, items, opts) {
     const counts = { glumes: 0, lemmas: 0, anthers: 0, filaments: 0, awns: 0, awnSegs: 0, rachis: 0 };
+    // Cleared each build: with no main ear yet (going back to a seedling
+    // stage), stale anchors from a later stage would stretch the framing.
+    this.anchors = {};
     const builder = this.model.crop.params.EAR.type === 'barley' ? this.buildBarleyEar : this.buildEar;
     for (const it of items.slice(0, MAX_EARS)) builder.call(this, it.sh, it.axis, opts, counts, it.sh === plant.main);
     for (const k of Object.keys(counts)) {

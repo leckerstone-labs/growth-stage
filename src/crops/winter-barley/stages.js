@@ -28,6 +28,11 @@ export const SOURCES = {
     title: 'AHDB Barley growth guide — Ear formation, grain development and ripening',
     url: 'https://ahdb.org.uk/knowledge-library/ear-formation-grain-development-and-crop-ripening-in-barley',
   },
+  // Rooting depths and root architecture in the plant view (roots model).
+  roots: {
+    title: 'AHDB — How to promote and measure root growth and distribution in cereals',
+    url: 'https://ahdb.org.uk/knowledge-library/how-to-promote-and-measure-root-growth-and-distribution-in-cereals',
+  },
 };
 
 export const PHASES = [

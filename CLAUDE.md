@@ -4,7 +4,7 @@ Animated crop growth-stage guide (Leckerstone Labs), shipped as a Progressive We
 
 If present, `PROJECT_LOG.md` (session history, open threads) and `IDEA.md` (product brief) are the maintainer's local notes. They are git-ignored: read them for context, but never quote them in committed files.
 
-Current state: Three.js PWA with **winter wheat** and **winter barley (two-row)** (Zadoks GS05–GS92) and **winter oilseed rape** (AHDB BBCH key, GS05–GS89). Pick the crop in the header or with `?crop=winter_barley` / `?crop=winter_oilseed_rape`. The PWA is the only app: there are no native iOS/Android apps. No build step for development; three.js is vendored in `vendor/`, and a service worker makes the published app work offline.
+Current state: Three.js PWA with **winter wheat** and **winter barley (two-row)** (Zadoks GS05–GS92) and **winter oilseed rape** (AHDB BBCH key, GS05–GS89). Pick the crop in the header or with `?crop=winter_barley` / `?crop=winter_oilseed_rape`. The app opens at the crop's final stage unless `?gs=` names one (switching crop keeps the stage if the new crop has it). The PWA is the only app: there are no native iOS/Android apps. No build step for development; three.js is vendored in `vendor/`, and a service worker makes the published app work offline.
 
 ## Commands
 
@@ -43,7 +43,9 @@ npm run build-site  # build dist/ (stamps the service worker, writes _headers)
 | Key states | `src/crops/<crop>/keyframes.js` + `src/model/keyframes.js` | One row per checkpoint (per crop); values carry forward; monotone-spline interpolation (no overshoot, so thresholds are crossed once). Extra channels in a crop's first row are interpolated too. |
 | Dimensions | `src/crops/<crop>/params.js` | Leaf/sheath/blade tables, shoots, stem radii, ear profile, ear and collar type. |
 | Morphology | `src/model/morphology.js` (cereals), `src/model/brassica.js` (OSR) | Pure maths (no three.js). `src/model/index.js` picks one by `crop.family`. Each returns `computePlant`, `measureMain`, `checkStages` (runs the crop's `checks.js`) and `tAt`; brassica also returns `table` for `npm run check`. |
-| Rendering | `src/render/*.js` | Cereals: merged-geometry batches (`plant-mesh.js`), instanced ear (`ear-mesh.js`), grain close-up. OSR: `brassica-mesh.js` (reuses `Batch`), `pod-view.js` seed close-up. Shared: soil, materials. |
+| Roots | `src/model/roots.js` (maths), `src/render/roots-mesh.js` (drawing) | Shared by every crop. `computeRoots(ROOTS, state, { clip, minR })`: `ROOTS.type` `'fibrous'` (seminal + nodal) or `'taproot'` (+ laterals), optional `nodules` (beans). The keyframe `roots` channel is the real root length from the seed (cm). Meshes save `rootArgs` in `build()` and draw with `setRoots(opts)` once the view knows the framing. |
+| Rendering | `src/render/*.js` | Cereals: merged-geometry batches (`plant-mesh.js`), instanced ear (`ear-mesh.js`), grain close-up. OSR: `brassica-mesh.js` (reuses `Batch`), `pod-view.js` seed close-up. Shared: soil, materials, roots. |
+| Soil | `src/render/soil.js`, `src/views/below-ground.js` | One cut-away soil block for every crop. Views call `belowGround()` in the plant view (soil depth from the plant's size, roots, rooting-depth readout and label, camera goal) and `belowGroundOther()` in other views. Don't add per-crop soil code. |
 | Views | `src/views/cereal.js`, `src/views/brassica.js` | Per crop family: which views are enabled when, geometry build per view, readout rows, overlay items and camera goal. `src/views/index.js` picks one by `crop.family`. |
 | UI | `src/main.js`, `src/ui/overlay.js` | Crop-independent: timeline, header, camera, render loop; overlay labels, brackets and `tag` badges. |
 | PWA | `src/pwa.js`, `sw.js` | Service worker registration, update toast, install button. Independent of main.js. |
@@ -55,7 +57,7 @@ Principles that make the model look right. Keep them when adding crops:
 - **Sheaths are stiff tubes.** Each keeps roughly its base width and only bulges where something inside pushes it out. Fitting them tightly to their contents pinches the sheath above the ear.
 - **Rendered parts must stay inside the model's envelope.** The ear is fitted to the model's length, follows the curved shoot axis, and is squeezed sideways while enclosed. When something pokes through, measure the geometry against the envelope numerically (see Debugging) rather than guessing.
 - **Timings refer to stage codes.** Use `tAt(code)` / `between()` in morphology and `tAt` in main, never raw `t` numbers. The timeline has already been re-allocated once, when the seedling stages were added.
-- **Exaggerations are deliberate and labelled in the UI:** stem-view width ×1–4, anthers ~1.6× thicker, enlarged ligule and auricles, and the blade bent back in the collar view. Note any new ones in README.
+- **Exaggerations are deliberate and labelled in the UI:** stem-view width ×1–4, anthers ~1.6× thicker, enlarged ligule and auricles, the blade bent back in the collar view, and thicker-than-life roots in the plant view. Note any new ones in README.
 
 ## Adding another crop
 
@@ -65,7 +67,7 @@ The app picks the crop from the URL (`?crop=<id>`); the header has a picker that
 src/crops/<crop>/index.js       # assembles the pieces below
 src/crops/<crop>/stages.js      # STAGES, PHASES, SOURCES, TICKS, UI wording
 src/crops/<crop>/keyframes.js   # ROWS (channels may differ per crop)
-src/crops/<crop>/params.js      # leaf/sheath/blade tables, SHOOTS, stem radii, ear/grain dims, collar type
+src/crops/<crop>/params.js      # leaf/sheath/blade tables, SHOOTS, stem radii, ear/grain dims, collar type, ROOTS
 src/crops/<crop>/checks.js      # stage rules for npm run check
 ```
 
@@ -108,7 +110,8 @@ What differs per crop. These are reference notes: verify each against AHDB befor
   - InstancedMesh needs `instanceColor` created up front.
   - Resized BufferGeometries must be replaced, not edited in place. Both cause "vertex buffer not big enough".
   - Inside-out triangle winding shows up as wrong cut faces in clipped views.
-  - The stem-view width exaggeration scales the whole plant group, so anything else in it (roots) gets stretched too.
+  - The stem-view width exaggeration scales the whole plant group, so anything else in it (roots) gets stretched too. Roots are capped to short stubs in stem views for this reason.
+  - Roots use a transparent material and the soil cut face doesn't write depth, so roots behind the cut still draw over it. Root tubes must face outwards (`up = side × t` in `roots-mesh.js`).
 
 ## Conventions
 

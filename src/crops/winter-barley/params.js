@@ -102,3 +102,14 @@ export const PALETTE = {
   earRipe: '#dcc38a',
   stemRipe: '#e4cd8a',
 };
+
+// Root system (src/model/roots.js), as wheat's: seminal roots, then crown
+// (nodal) roots from about three leaves, many branches, mostly in the
+// topsoil. Barley usually has a few more seminal roots than wheat.
+export const ROOTS = {
+  type: 'fibrous',
+  // [azimuth rad, angle from down °, starts at rooting depth cm, length share]
+  seminal: { r: 0.022, gravity: 0.08, roots: [[0, 0, 0, 1], [0.6, 46, 1.2, 0.85], [3.7, 50, 1.2, 0.85], [2.1, 60, 2.2, 0.85], [5.2, 56, 2.2, 0.85], [1.4, 64, 3, 0.8]] },
+  nodal: { start: 2.5, perLeaf: 2, max: 20, rate: 12, r: 0.032, tilt: [55, 80], gravity: 0.06 },
+  laterals: { from: 1.5, spacing: 1.8, tipZone: 2, len: 6, rate: 0.25, decay: 30, angle: 55, r: 0.01, gravity: 0.06 },
+};

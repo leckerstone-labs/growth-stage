@@ -26,7 +26,7 @@ npm run check        # verifies the model meets the AHDB stage rules at every ch
 npm run build-site   # builds dist/ (what gets published)
 ```
 
-Keys: ← / → previous/next stage, space play/pause. Drag to rotate, scroll/pinch to zoom.
+The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← / → previous/next stage, space play/pause. Drag to rotate, scroll/pinch to zoom.
 
 ## How it fits together
 
@@ -35,7 +35,9 @@ Keys: ← / → previous/next stage, space play/pause. Drag to rotate, scroll/pi
 | Crops | `src/crops/<crop>/` | Per crop: stage text and timeline positions (`stages.js`), key states (`keyframes.js`), dimensions (`params.js`) and stage rules (`checks.js`). Registered in `src/crops/index.js`; picked with `?crop=<id>` or the header picker. |
 | Key states | `src/crops/<crop>/keyframes.js` | One row of numbers per checkpoint (leaf clock, internode lengths, ear position, flowering, grain…). Interpolated with a monotone spline so nothing shrinks or overshoots between checkpoints. |
 | Morphology | `src/model/morphology.js`, `src/model/brassica.js` | Turns key states into a plant. Cereals: shoots, nodes, nested leaf sheaths, collars, blades, ear. Oilseed rape: seedling, leaf midribs, internodes, racemes and every flower/pod. Pure maths — also used by `npm run check`. |
+| Roots | `src/model/roots.js`, `src/render/roots-mesh.js` | Root systems for every crop from each crop's `ROOTS` (in `params.js`): fibrous (seminal then nodal roots, as in cereals) or a taproot with laterals (oilseed rape), with optional nodules for legumes. |
 | Rendering | `src/render/*.js` | three.js geometry (merged meshes, instanced ear parts), materials, grain and pod close-ups. |
+| Soil | `src/render/soil.js`, `src/views/below-ground.js` | The cut-away soil block, its depth and the plant-view framing, shared by every crop. |
 | Views | `src/views/cereal.js`, `src/views/brassica.js` | Per crop family: geometry for each inspection view, readouts, labels and camera framing. |
 | UI | `src/main.js`, `src/ui/overlay.js` | Timeline, header, camera, render loop; live labels and measurement brackets. |
 | PWA | `src/pwa.js`, `sw.js`, `manifest.webmanifest` | Offline caching, update toast, install button. See [Installable app](#installable-app-pwa). |
@@ -43,6 +45,13 @@ Keys: ← / → previous/next stage, space play/pause. Drag to rotate, scroll/pi
 ### Botanical rules the model follows
 
 - From GS05: seed at 3.2 cm, seminal roots, coleoptile to the surface (GS09), first leaf through its tip (GS10); the sub-crown internode lifts the crown to 1.2 cm below the surface. The plant view shows the soil as a cut-away block.
+
+### Soil and roots (every crop)
+
+- Every crop's plant view shows the same cut-away soil block: the far half of the surface and a vertical cut face, deepening as the plant grows (9 cm for a seedling, up to 26 cm for a full-grown plant). The oilseed rape leaves view, which looks straight down, shows the whole surface instead.
+- Roots are drawn at true scale in the block and thin out at its bottom; real roots go far deeper, so the readout gives the rooting depth and a label says how far the roots continue. With a tall plant in frame, roots are drawn thicker than life so they stay visible (the readout says so).
+- Cereals: seminal roots from the seed (five for wheat, six for barley), then nodal (crown) roots from the crown from about the three-leaf stage, two per leaf up to 20, all branching, most root length in the topsoil. Rooting depth follows the AHDB wheat growth guide: main roots grow about 12 mm/day in autumn, 6 in winter and 18 in spring; about 1 m deep by GS31 and about 1.5 m (up to 2 m) by flowering. AHDB gives no separate barley figures, so barley uses the same depths.
+- Oilseed rape: a taproot that thickens at the top with the root collar, with laterals that get shorter with depth (root length density falls with depth, AHDB project PR402). The depths (about 45 cm at GS30, about 1.2 m by the end of flowering) are illustrative: AHDB gives no oilseed rape rooting-depth benchmark.
 
 - Main shoot has 11 leaves; leaves are numbered down from the flag leaf (flag, leaf 2, 3, 4) as in UK advice. Leaves 1–6 sit on the crown, leaf 7 on the base node, leaves 8–11 on nodes 1–4.
 - Each blade emerges rolled from the sheath of the leaf below and unrolls; its ligule becomes visible when it is fully emerged.
@@ -58,6 +67,7 @@ Keys: ← / → previous/next stage, space play/pause. Drag to rotate, scroll/pi
 - Stem view widens tall shoots (×1–4) so nodes stay legible.
 - Anthers ~1.6× thicker, ligule and auricles slightly larger than life.
 - Collar view bends the inspected blade back to expose the ligule, as you would in the field.
+- Plant view: roots of a large plant are drawn thicker than life, and only the top of the root system (down to the bottom of the soil block) is shown; the readout says so and gives the real rooting depth.
 
 ### Winter barley (two-row)
 
