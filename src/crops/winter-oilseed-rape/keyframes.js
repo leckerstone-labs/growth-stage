@@ -3,7 +3,8 @@
 // spline (src/model/keyframes.js), so nothing overshoots between rows.
 //
 // Channels (read by src/model/brassica.js):
-//   roots     taproot length, cm
+//   roots     taproot length from the seed, real cm (src/model/roots.js; the
+//             rooting depth readout adds the seed depth)
 //   hypo      hypocotyl length from the seed, cm (seed at SEED_DEPTH)
 //   hook      hypocotyl hook: 1 = bent over below ground, 0 = straight
 //   coty      cotyledons opening: 0 folded together, 1 flat
@@ -40,19 +41,19 @@ export const ROWS = [
   { code: 14, roots: 15, vL: 4, collar: 0.11, habit: 0.18 },
   { code: 16, roots: 21, vL: 6, collar: 0.17, habit: 0.32 },
   { code: 19, roots: 30, vL: 9.3, collar: 0.28, habit: 0.6, bud: 0.04 },
-  { code: 30, roots: 40, vL: 12, collar: 0.4, habit: 0.9, hypo: 2.0, bud: 0.12 },
-  { code: 50, vL: 13.2, collar: 0.45, habit: 0.75, ext: 0.05, bud: 0.32 },
+  { code: 30, roots: 45, vL: 12, collar: 0.4, habit: 0.9, hypo: 2.0, bud: 0.12 },
+  { code: 50, roots: 60, vL: 13.2, collar: 0.45, habit: 0.75, ext: 0.05, bud: 0.32 },
   { code: 51, vL: 14.2, habit: 0.65, ext: 0.15, bud: 0.48, enclose: 0.35, spread: 0.05, rach: 0.4 },
-  { code: 53, vL: 15.8, habit: 0.6, ext: 0.31, bud: 0.62, enclose: 0, spread: 0.2, rach: 1.5 },
+  { code: 53, roots: 75, vL: 15.8, habit: 0.6, ext: 0.31, bud: 0.62, enclose: 0, spread: 0.2, rach: 1.5 },
   { code: 55, vL: 17.2, ext: 0.42, bud: 0.76, spread: 0.6, rach: 1.8 },
   { code: 57, vL: 18.6, ext: 0.56, bud: 0.88, spread: 0.85, rach: 2.8 },
-  { code: 59, vL: 19.6, ext: 0.7, bud: 1, spread: 1, rach: 3.8, yb: 0.08 },
+  { code: 59, roots: 95, vL: 19.6, ext: 0.7, bud: 1, spread: 1, rach: 3.8, yb: 0.08 },
   { code: 60, vL: 20, ext: 0.8, rach: 5, yb: 0.14, opened: 0.03 },
   { code: 61, ext: 0.87, rach: 8, yb: 0.24, opened: 0.12 },
   { code: 63, ext: 0.93, rach: 14, yb: 0.42, opened: 0.32, fallen: 0.04 },
-  { code: 65, ext: 0.98, rach: 20, yb: 0.62, opened: 0.52, fallen: 0.18, podFull: -0.3 },
+  { code: 65, roots: 115, ext: 0.98, rach: 20, yb: 0.62, opened: 0.52, fallen: 0.18, podFull: -0.3 },
   { code: 67, ext: 1, rach: 28, yb: 0.88, opened: 0.8, fallen: 0.56, podFull: -0.2 },
-  { code: 69, rach: 35, yb: 1, opened: 1, fallen: 1, podFull: -0.08, seed: 0.2, leafLoss: 0.05 },
+  { code: 69, roots: 125, rach: 35, yb: 1, opened: 1, fallen: 1, podFull: -0.08, seed: 0.2, leafLoss: 0.05 },
   { code: 71, rach: 40, podFull: 0.13, seed: 0.5, leafLoss: 0.12 },
   { code: 75, rach: 45, podFull: 0.52, seed: 1, leafLoss: 0.3 },
   { code: 79, rach: 48, podFull: 0.93, seed: 1.6, leafLoss: 0.55 },

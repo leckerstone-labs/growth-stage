@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep, hash } from '../model/interp.js';
 import { rgb, mix } from './materials.js';
 import { Batch } from './plant-mesh.js';
+import { redrawRoots } from './roots-mesh.js';
 
 const TWO_PI = Math.PI * 2;
 const UP = new THREE.Vector3(0, 1, 0);
@@ -109,12 +110,11 @@ export class BrassicaMesh {
     for (const L of plant.leaves) if (L.present) this.buildLeaf(plant, L);
     for (const r of plant.racemes) this.buildRaceme(plant, r);
     for (const b of this.batches()) b.commit();
-    this.roots.mesh.visible = mode === 'stem' || (mode === 'plant' && plant.K.vL < 4);
+    this.roots.mesh.visible = mode === 'stem' || mode === 'plant';
   }
 
   // Bounding box of what is drawn (for camera framing). The plant view leaves
-  // the roots out and blends them in itself, so the frame doesn't jump when
-  // they are hidden.
+  // the roots out: it frames the soil block instead.
   bounds({ roots = true } = {}) {
     const box = new THREE.Box3();
     for (const b of this.batches()) {
@@ -150,39 +150,20 @@ export class BrassicaMesh {
       }, 10);
     }
 
-    // Taproot from the seed down, tapering; plus lateral roots.
-    const depth = Math.min(S.rootLen, 9 + S.seedY); // to the bottom of the soil block shown
-    if (S.rootLen > 0.05 && mode !== 'leaves' && mode !== 'buds' && mode !== 'pods') {
-      const n = Math.max(3, Math.ceil(depth / 0.3));
-      const pts = [];
-      for (let i = 0; i <= n; i++) {
-        const d = (depth * i) / n;
-        pts.push(new THREE.Vector3((hash('tx', Math.floor(d)) - 0.5) * 0.12 * smoothstep(0, 3, d), S.seedY - d, (hash('tz', Math.floor(d)) - 0.5) * 0.12 * smoothstep(0, 3, d)));
-      }
-      // Thick at the root collar, tapering quickly to a long thin taproot.
-      const r0 = Math.max(0.03, S.collarR * 0.8);
-      tube(this.roots, pts, (i) => {
-        const d = (depth * i) / n;
-        return Math.max(0.014, r0 * Math.exp(-d / (0.8 + 3 * S.collarR)) * (1 - 0.85 * smoothstep(S.rootLen - 1, S.rootLen, d)));
-      }, (i) => mix(C.rootCollar, C.root, smoothstep(0, 3, (depth * i) / n)), 12);
-      // Laterals every ~0.8 cm below the first centimetre, longest near the top.
-      for (let d = 0.9, k = 0; d < depth - 0.3; d += 0.8, k++) {
-        const len = Math.min(5.5, (S.rootLen - d) * 0.28) * (0.6 + 0.4 * hash('ll', k));
-        if (len < 0.1) continue;
-        const az = k * 2.4 + hash('la', k);
-        const start = pts[Math.round((d / depth) * n)];
-        const lp = [];
-        const p = start.clone();
-        const dir = new THREE.Vector3(Math.cos(az), -0.35, Math.sin(az)).normalize();
-        for (let s = 0; s <= 5; s++) {
-          lp.push(p.clone());
-          dir.add(new THREE.Vector3(0, -0.08, 0)).normalize();
-          p.addScaledVector(dir, len / 5);
-          if (p.y < -8.8) break;
-        }
-        tube(this.roots, lp, (i) => 0.014 * (1 - (i / lp.length) * 0.5), () => C.root, 4);
-      }
-    }
+    // Taproot and laterals (model/roots.js), drawn by setRoots once the view
+    // knows the framing. In the stem view only the top of the taproot.
+    this.rootArgs = mode === 'plant' || mode === 'stem' ? {
+      spec: this.P.ROOTS,
+      st: { depth: S.rootLen, seed: [0, S.seedY, 0], collarR: S.collarR },
+      stub: mode === 'stem' ? 3 : 0,
+      colours: { root: C.root, old: rgb('#cbb994'), collar: C.rootCollar },
+    } : null;
+  }
+
+  // Roots, drawn after build() once the view has chosen the soil depth and
+  // framing (opts: views/below-ground.js rootOptions).
+  setRoots(opts) {
+    this.rootSystem = redrawRoots(this.roots, this.rootArgs, opts);
   }
 
   // ---- Stem and racemes ---------------------------------------------------

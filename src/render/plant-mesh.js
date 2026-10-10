@@ -9,6 +9,7 @@ import { clamp, lerp, smoothstep, hash } from '../model/interp.js';
 import { PALETTE as P, mix, rgb } from './materials.js';
 import { grainGeometry, stateAt as grainState } from './grain-view.js';
 import { SEED_DEPTH } from '../model/morphology.js';
+import { redrawRoots } from './roots-mesh.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 const TWO_PI = Math.PI * 2;
@@ -171,6 +172,8 @@ export class PlantMesh {
     const section = opts.mode === 'stem';
     for (const b of [this.blades, this.sheaths, this.stems, this.ligules, this.auricles, this.hairs, this.roots]) b.reset();
     this.anchors = {};
+    this.rootArgs = null; // set by buildSeedling (plant and stem views)
+    this.rootSystem = null;
     this.axes.clear();
     const shoots = opts.mode === 'plant' ? plant.shoots : [plant.main];
     // Stem view: leaves are trimmed off just above the ear/top node, like the
@@ -185,6 +188,12 @@ export class PlantMesh {
     this.blades.mesh.visible = opts.mode !== 'stem';
     this.roots.mesh.visible = opts.mode === 'stem' || opts.mode === 'plant';
     this.seed.visible = this.roots.mesh.visible && this.seed.visible;
+  }
+
+  // Roots, drawn after build() once the view has chosen the soil depth and
+  // framing (opts: views/below-ground.js rootOptions).
+  setRoots(opts) {
+    this.rootSystem = redrawRoots(this.roots, this.rootArgs, opts);
   }
 
   buildShoot(sh, plant, opts) {
@@ -360,59 +369,23 @@ export class PlantMesh {
       });
     }
 
-    // Roots: thin tapering tubes that bend downwards as they grow.
-    const root = (start, dir, length, r0, seed) => {
-      // Stem view: roots are just short stubs (they would also be stretched
-      // by the stem-width exaggeration there).
-      if (opts.mode === 'stem') length = Math.min(length, 1.8);
-      if (length < 0.05) return;
-      const SEG = Math.max(4, Math.min(24, Math.ceil(length / 0.4)));
-      const pts = [];
-      const p = start.clone();
-      const d = dir.clone().normalize();
-      for (let i = 0; i <= SEG; i++) {
-        pts.push(p.clone());
-        if (p.y < -8.8) break; // below the soil section shown
-        d.add(V((hash(seed, 'x', i) - 0.5) * 0.25, -0.06, (hash(seed, 'z', i) - 0.5) * 0.25)).normalize();
-        p.addScaledVector(d, length / SEG);
-      }
-      const n = pts.length - 1;
-      if (n < 1) return;
-      const col = mix(P.root, rgb('#cbb994'), hash(seed, 'c') * 0.6);
-      this.roots.grid(n, 5, (i, j, o) => {
-        const a = (TWO_PI * j) / 5;
-        const t = pts[Math.min(i + 1, n)].clone().sub(pts[Math.max(i - 1, 0)]).normalize();
-        const side = Math.abs(t.y) < 0.9 ? V(0, 1, 0).cross(t).normalize() : V(1, 0, 0);
-        const up = t.clone().cross(side);
-        const r = r0 * lerp(1, 0.35, i / n);
-        o.p.copy(pts[i]).addScaledVector(side, Math.cos(a) * r).addScaledVector(up, Math.sin(a) * r);
-        o.c = col; o.u = 0; o.v = 0;
-      });
+    // Roots (model/roots.js): seminal roots from the seed, nodal roots from
+    // the crown. Drawn by setRoots once the view knows the framing. In the
+    // stem view they are just short stubs (the stem-width exaggeration
+    // would stretch them sideways).
+    const R = this.crop.params.ROOTS;
+    this.rootArgs = {
+      spec: R,
+      st: { depth: S.rootDepth, leafClock: S.leafClock, seed: [x0 + 0.03, S.seedY - 0.08, z0], crown: [x0, baseY, z0] },
+      stub: opts.mode === 'stem' ? 1.8 : 0,
+      colours: { root: P.root, old: rgb('#cbb994') },
     };
-    const embryo = V(x0 + 0.03, S.seedY - 0.08, z0);
-    // Seminal roots: the radicle first, then two pairs.
-    const seminal = [[0, 0, 0], [0.6, 48, 1.2], [3.7, 52, 1.2], [2.1, 62, 2.2], [5.2, 58, 2.2]];
-    seminal.forEach(([az, tilt, delay], i) => {
-      const t = (tilt * Math.PI) / 180;
-      root(embryo, V(Math.cos(az) * Math.sin(t), -Math.cos(t), Math.sin(az) * Math.sin(t)),
-        Math.max(0, S.seminalLen - delay) * (i ? 0.85 : 1), 0.022, 'sr' + i);
-    });
-    // Crown (nodal) roots from the crown, spreading more sideways; added
-    // a pair at a time as leaves are produced.
-    for (let i = 0; i < S.crownRootCount; i++) {
-      const az = i * 2.4 + hash('ca', i);
-      const t = (55 + hash('ct', i) * 25) * Math.PI / 180;
-      const age = clamp(1 - i / 14);
-      root(V(x0 + Math.cos(az) * 0.08, baseY + 0.05, z0 + Math.sin(az) * 0.08),
-        V(Math.cos(az) * Math.sin(t), -Math.cos(t), Math.sin(az) * Math.sin(t)),
-        S.crownRootLen * (0.5 + 0.5 * age) * (0.8 + 0.4 * hash('cl', i)), 0.032, 'cr' + i);
-    }
     this.anchors.seedling = {
       seed: V(x0 - 0.35, S.seedY, z0),
       coleoTip: V(x0, seedTop + S.coleoLen * 0.85, z0),
       subcrown: V(x0, (seedTop + baseY) / 2, z0),
       crown: V(x0, baseY, z0),
-      present: { coleo: len > 0.05 && S.coleoGone < 0.5, seed: used < 0.9, subcrown: baseY - seedTop > 0.5, crownRoots: S.crownRootCount > 0 },
+      present: { coleo: len > 0.05 && S.coleoGone < 0.5, seed: used < 0.9, subcrown: baseY - seedTop > 0.5, crownRoots: S.rootDepth > 0 && S.leafClock >= R.nodal.start + 1 / R.nodal.perLeaf },
     };
   }
 

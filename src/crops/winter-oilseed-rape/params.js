@@ -92,3 +92,14 @@ export const COLOURS = {
   stamen: '#e8b81c',
   seedCoat: '#3b2a20',
 };
+
+// Root system (src/model/roots.js): a taproot with laterals; the rooting
+// depth comes from the `roots` keyframe channel. The taproot thickens at the
+// top with the root collar (`collar` × collar radius, thinning over
+// decay[0] + decay[1] × collar radius cm). Laterals are longest near the
+// surface: root length density falls with depth (AHDB project PR402).
+export const ROOTS = {
+  type: 'taproot',
+  tap: { r: 0.03, collar: 0.8, decay: [1, 25], wander: 0.06 },
+  laterals: { from: 0.9, spacing: 0.5, tipZone: 1.5, len: 14, rate: 0.3, decay: 25, angle: 65, r: 0.025, gravity: 0.05 },
+};

@@ -60,3 +60,21 @@ export const EAR = {
 export const COLLAR = {
   type: 'wheat', // small, hairy auricles; short ligule
 };
+
+// Root system (src/model/roots.js); the rooting depth comes from the `roots`
+// keyframe channel. AHDB: three to six seminal roots before the second leaf;
+// crown (nodal) roots from the 3–4 leaf stage; 20 or more main roots per
+// plant with many branches; over 70% of root length in the top 30 cm.
+export const ROOTS = {
+  type: 'fibrous',
+  // Seminal roots: the radicle, then two pairs. Each row: azimuth (rad),
+  // angle from straight down (°), rooting depth (cm) before it starts,
+  // length as a share of the rooting depth.
+  seminal: { r: 0.022, gravity: 0.08, roots: [[0, 0, 0, 1], [0.6, 48, 1.2, 0.85], [3.7, 52, 1.2, 0.85], [2.1, 62, 2.2, 0.85], [5.2, 58, 2.2, 0.85]] },
+  // Nodal roots from the crown: from leaf clock `start`, `perLeaf` per leaf
+  // up to `max`; each grows `rate` cm per leaf, leaving at `tilt` (° from down).
+  nodal: { start: 2.5, perLeaf: 2, max: 20, rate: 12, r: 0.032, tilt: [55, 80], gravity: 0.06 },
+  // Branch roots: every `spacing` cm from `from` cm, none in the last
+  // `tipZone` cm; up to `len` cm, shorter with depth (e-fold `decay` cm).
+  laterals: { from: 1.5, spacing: 1.8, tipZone: 2, len: 6, rate: 0.25, decay: 30, angle: 55, r: 0.01, gravity: 0.06 },
+};

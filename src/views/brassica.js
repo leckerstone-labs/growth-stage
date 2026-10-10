@@ -9,6 +9,7 @@ import { VISIBLE_INTERNODE } from '../model/brassica.js';
 import { setSection, setGhost } from '../render/materials.js';
 import { BrassicaMesh } from '../render/brassica-mesh.js';
 import { PodView, seedStateText } from '../render/pod-view.js';
+import { belowGround, belowGroundOther } from './below-ground.js';
 
 const V = (p) => new THREE.Vector3(p[0], p[1], p[2]);
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -50,10 +51,10 @@ export function createBrassicaView({ crop, model, M, scene, soil }) {
     if (mode !== 'seed') {
       mesh.build(plant, { mode });
       soil.group.visible = true;
-      // Rosette leaves lie on the soil, so from GS14 the plant view shows the
-      // whole surface; the cut-away is kept while the seedling and roots are
-      // the point of interest (and in the stem view).
-      soil.setFull(mode === 'leaves' || (mode !== 'stem' && plant.t >= tAt(14)));
+      // Soil and roots: the plant view sizes them from the plant (below).
+      // The same cut-away block as every crop, except the leaves view, which
+      // looks straight down to count leaves: there the whole surface shows.
+      if (mode !== 'plant') belowGroundOther({ soil, mesh, full: mode === 'leaves' });
     } else {
       podView.update(K.seed);
     }
@@ -66,7 +67,6 @@ export function createBrassicaView({ crop, model, M, scene, soil }) {
     if (mode === 'plant') {
       const t = plant.t;
       if (t < tAt(10)) {
-        rows.push(['Taproot', `${m.rootLen.toFixed(1)} cm`]);
         rows.push(['Hypocotyl', m.hypoLen <= 0 ? 'not yet out of the seed' : m.hookTop < 0 ? 'hooked, below ground' : 'hook breaking the surface']);
       } else {
         rows.push(leafRow());
@@ -87,18 +87,10 @@ export function createBrassicaView({ crop, model, M, scene, soil }) {
       }
       if (t >= tAt(50) && t < tAt(60) && m.budPresent) items.push({ kind: 'label', p: new THREE.Vector3(0, m.budTop, 0), text: m.budsEnclosed ? 'Buds (hidden)' : 'Flower buds', tone: 'accent', side: 'right', dx: 70 });
       const box = mesh.bounds({ roots: false });
-      box.expandByPoint(new THREE.Vector3(0, plant.seedling.seedY - 1, 0));
-      // The roots are hidden from GS14 (vL 4): ease them out of the frame
-      // over the leaf before, so the camera doesn't jump when they go.
-      const rb = mesh.roots.mesh.visible && mesh.roots.pos.length ? mesh.roots.geometry.boundingBox : null;
-      if (rb) box.min.y = Math.min(box.min.y, lerp(rb.min.y, box.min.y, smoothstep(3.2, 4, K.vL)));
-      box.min.y = Math.max(box.min.y, -7);
-      box.max.y = Math.max(box.max.y, 1);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-      // Look down more on a low rosette, so leaves lying on the soil read as flat.
-      const low = 1 - clamp((m.height - 10) / 30);
-      goal = { target: new THREE.Vector3(0, center.y, 0), height: Math.max(size.y * 1.08 + 1, 4.5), width: Math.max(Math.max(size.x, size.z) * 1.05 + 1, 4.5), dir: new THREE.Vector3(0.3, 0.2 + 0.35 * low * (t >= tAt(11) ? 1 : 0), 1) };
+      const below = belowGround({ soil, mesh, box, depth: K.roots - plant.seedling.seedY });
+      rows.push(...below.rows);
+      items.push(...below.items);
+      goal = below.goal;
     } else if (mode === 'leaves') {
       rows.push(leafRow());
       const coty = plant.cotyledons[0];

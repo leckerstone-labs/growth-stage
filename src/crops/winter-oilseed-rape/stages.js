@@ -34,6 +34,12 @@ export const SOURCES = {
     title: 'AHDB OSR growth guide — Senescence and harvest (GS9)',
     url: 'https://ahdb.org.uk/knowledge-library/senescence-and-harvest-of-oilseed-rape-gs9',
   },
+  // Root length density with depth (plant view roots). The rooting depths
+  // themselves are illustrative: AHDB gives no OSR depth benchmark.
+  roots: {
+    title: 'AHDB project PR402 — Managing oilseed rape to balance root and canopy growth',
+    url: 'https://ahdb.org.uk/management-of-oilseed-rape-to-balance-root-and-canopy-growth',
+  },
 };
 
 export const PHASES = [

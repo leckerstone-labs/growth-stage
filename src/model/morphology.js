@@ -259,9 +259,9 @@ export function createModel(crop) {
       coleoSen: smoothstep(1.5, 4, K.vH),
       coleoGone: smoothstep(5, 7.5, K.vH),
       crownY: baseY,
-      seminalLen: K.roots,
-      crownRootLen: K.crownRoots,
-      crownRootCount: Math.round(clamp((K.vH - 2.5) * 2, 0, 12)),
+      // Rooting depth (real cm) and leaf clock, for the roots (model/roots.js).
+      rootDepth: K.roots,
+      leafClock: K.vH,
     };
 
     return {

@@ -190,7 +190,9 @@ export function createMaterials() {
     }),
     auricle: std({ side: THREE.DoubleSide, roughness: 0.5 }),
     hair: new THREE.LineBasicMaterial({ color: new THREE.Color('#f4f1df'), transparent: true, opacity: 0.9 }),
-    root: std({ roughness: 0.8 }),
+    // Drawn in the transparent pass, after the soil cut face, so roots on the
+    // far side of the cut still show over it (as in a root drawing).
+    root: std({ roughness: 0.8, transparent: true }),
     seed: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55 }),
     cut: cutMaterial(clip),
     soil: new THREE.MeshStandardMaterial({ map: soilTexture(), transparent: true, roughness: 1, depthWrite: false }),
