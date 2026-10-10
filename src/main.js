@@ -80,7 +80,7 @@ const overlay = new Overlay($('overlay-lines'), $('overlay-labels'));
 // State
 // ---------------------------------------------------------------------------
 const state = {
-  t: 28,
+  t: 100, // set from the URL or the final stage at start-up
   mode: 'plant',
   variant: false, // crop's variety toggle (awned wheat); none for barley
   playing: false,
@@ -398,7 +398,9 @@ function rebuild() {
   const ib = $('inspect-btn');
   ib.hidden = cur.inspect === mode;
   ib.textContent = `Show ${INSPECT_VIEWS[cur.inspect].label.toLowerCase()} view`;
-  $('sources').innerHTML = 'Source: ' + cur.sources.map((k) => `<a href="${SOURCES[k].url}" target="_blank" rel="noopener">${SOURCES[k].title}</a>`).join('; ');
+  // The plant view's rooting depth has its own source.
+  const srcKeys = mode === 'plant' && SOURCES.roots && !cur.sources.includes('roots') ? [...cur.sources, 'roots'] : cur.sources;
+  $('sources').innerHTML = 'Source: ' + srcKeys.map((k) => `<a href="${SOURCES[k].url}" target="_blank" rel="noopener">${SOURCES[k].title}</a>`).join('; ');
 
   for (const b of $('views').children) {
     b.setAttribute('aria-pressed', b.dataset.mode === mode);
@@ -603,9 +605,10 @@ buildTimeline();
 layoutScale();
 buildViews();
 resize();
-// Start at the stage and view given in the URL (set when switching crop).
-const startStage = STAGES.find((x) => x.code === +params.get('gs'));
-if (startStage) state.t = startStage.t;
+// Start at the stage and view given in the URL (set when switching crop);
+// otherwise, or if this crop has no such stage, at the crop's final stage.
+const startStage = STAGES.find((x) => x.code === +params.get('gs')) || STAGES[STAGES.length - 1];
+state.t = startStage.t;
 if (Object.hasOwn(INSPECT_VIEWS, params.get('view') ?? '')) state.mode = params.get('view');
 setT(state.t);
 requestAnimationFrame(frame);
