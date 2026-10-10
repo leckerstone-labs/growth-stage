@@ -25,7 +25,7 @@ function perp(t) {
 // Frames along a polyline: tangent t and two normals e1, e2 (parallel
 // transported so tubes don't twist), with cross(t, e2) = e1 so the tube
 // faces point outwards.
-function frames(pts) {
+export function frames(pts) {
   const n = pts.length;
   const out = [];
   let e1 = null;
@@ -44,7 +44,7 @@ function frames(pts) {
 }
 
 // Tube along points. r(i) radius, c(i) colour.
-function tube(batch, pts, r, c, RAD = 8) {
+export function tube(batch, pts, r, c, RAD = 8) {
   if (pts.length < 2) return;
   const F = frames(pts);
   batch.grid(pts.length - 1, RAD, (i, j, o) => {
@@ -57,7 +57,7 @@ function tube(batch, pts, r, c, RAD = 8) {
 }
 
 // Ellipsoid of length L and radius R centred on c along unit axis d.
-function ellipsoid(batch, c, d, L, R, col, NU = 6, NV = 8) {
+export function ellipsoid(batch, c, d, L, R, col, NU = 6, NV = 8) {
   const e1 = perp(d), e2 = new THREE.Vector3().crossVectors(e1, d);
   batch.grid(NU, NV, (i, j, o) => {
     const th = (Math.PI * i) / NU;

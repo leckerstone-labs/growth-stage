@@ -78,9 +78,11 @@ export function rootReadout(system, depth, shown, { minR = 0 } = {}) {
 
 // Plant view: size the soil block from the drawn plant (box: above ground,
 // without roots), draw the roots, and return readout rows, labels and the
-// camera goal. depth: real rooting depth (cm).
-export function belowGround({ soil, mesh, box, depth }) {
-  const shown = soilDepthFor(box);
+// camera goal. depth: real rooting depth (cm). minShown: soil to show at
+// least (cm), for a crop sown deep enough that its seed would otherwise sit
+// in the faded bottom of the block (field beans).
+export function belowGround({ soil, mesh, box, depth, minShown = 0 }) {
+  const shown = Math.max(soilDepthFor(box), minShown);
   soil.setDepth(shown);
   soil.setFull(false);
   const opts = rootOptions(box, shown);

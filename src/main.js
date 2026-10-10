@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from '../vendor/OrbitControls.js';
-import { SPECIES, getCrop, cropForSpecies } from './crops/index.js';
+import { CROPS, SPECIES, getCrop, cropForSpecies } from './crops/index.js';
 import { createCropModel } from './model/index.js';
 import { createCropView } from './views/index.js';
 import { clamp, lerp, smoothstep } from './model/interp.js';
@@ -28,7 +28,18 @@ const { stages: STAGES, phases: PHASES, sources: SOURCES, views: INSPECT_VIEWS }
 document.title = `Growth Stage — ${crop.name}`;
 function switchCrop(id) {
   if (id === crop.id) return;
-  const q = new URLSearchParams({ crop: id, gs: stageAt(state.t).cur.code, view: state.mode });
+  let gs = stageAt(state.t).cur.code;
+  // Crops on the same key (variants of one species, or cereals on Zadoks)
+  // don't always share checkpoints (winter beans have side-shoot stages
+  // GS21/22, oats have no GS49): keep the nearest earlier stage the other has.
+  // Across families the codes mean different things, so a missing code still
+  // opens the final stage.
+  const target = CROPS.find((c) => c.id === id);
+  const sameKey = target && (target.species === crop.species || target.family === crop.family);
+  if (sameKey && !target.stages.some((x) => x.code === gs)) {
+    gs = [...target.stages].reverse().find((x) => x.code <= gs)?.code ?? gs;
+  }
+  const q = new URLSearchParams({ crop: id, gs, view: state.mode });
   if (seed !== undefined) q.set('seed', seed);
   location.search = q.toString();
 }

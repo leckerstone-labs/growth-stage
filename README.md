@@ -7,9 +7,10 @@ see what changes and the feature to check, and compare it with the plant in fron
 https://leckerstonelabs.com/projects/growth-stage
 
 - Winter wheat, winter and spring two-row barley, spring and winter oats (Zadoks GS05–GS92),
-  winter oilseed rape (BBCH key as used by AHDB, GS05–GS89).
+  winter oilseed rape (BBCH key as used by AHDB, GS05–GS89), winter and spring field beans (BBCH
+  faba bean key as used by Defra/APHA and Bean YEN, GS05–GS97).
 - Inspection views: stem and node cutaway, collar and ligule, ear or panicle and grain, oilseed
-  rape pods.
+  rape pods, bean flowers, pods and seed.
 - A Progressive Web App: install it on a phone and it works offline in the field.
 - Three.js, plain ES modules, no build step for development (three.js is vendored in `vendor/`).
 
@@ -35,11 +36,11 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 |---|---|---|
 | Crops | `src/crops/<crop>/` | Per crop: stage text and timeline positions (`stages.js`), key states (`keyframes.js`), dimensions (`params.js`) and stage rules (`checks.js`). Registered in `src/crops/index.js`; picked with `?crop=<id>` or the header picker. Winter and spring forms of a species (same stage key) are variants: the picker lists species, with a Winter/Spring toggle beside it. |
 | Key states | `src/crops/<crop>/keyframes.js` | One row of numbers per checkpoint (leaf clock, internode lengths, ear position, flowering, grain…). Interpolated with a monotone spline so nothing shrinks or overshoots between checkpoints. |
-| Morphology | `src/model/morphology.js`, `src/model/brassica.js` | Turns key states into a plant. Cereals: shoots, nodes, nested leaf sheaths, collars, blades, ear. Oilseed rape: seedling, leaf midribs, internodes, racemes and every flower/pod. Pure maths — also used by `npm run check`. |
-| Roots | `src/model/roots.js`, `src/render/roots-mesh.js` | Root systems for every crop from each crop's `ROOTS` (in `params.js`): fibrous (seminal then nodal roots, as in cereals) or a taproot with laterals (oilseed rape), with optional nodules for legumes. |
+| Morphology | `src/model/morphology.js`, `src/model/brassica.js`, `src/model/legume.js` | Turns key states into a plant. Cereals: shoots, nodes, nested leaf sheaths, collars, blades, ear. Oilseed rape: seedling, leaf midribs, internodes, racemes and every flower/pod. Field beans: hypogeal seedling, square stem, compound leaves, axillary racemes, every flower and pod, basal side shoots. Pure maths — also used by `npm run check`. |
+| Roots | `src/model/roots.js`, `src/render/roots-mesh.js` | Root systems for every crop from each crop's `ROOTS` (in `params.js`): fibrous (seminal then nodal roots, as in cereals) or a taproot with laterals (oilseed rape, field beans), with nitrogen-fixing nodules for beans. |
 | Rendering | `src/render/*.js` | three.js geometry (merged meshes, instanced ear parts), materials, grain and pod close-ups. |
 | Soil | `src/render/soil.js`, `src/views/below-ground.js` | The cut-away soil block, its depth and the plant-view framing, shared by every crop. |
-| Views | `src/views/cereal.js`, `src/views/brassica.js` | Per crop family: geometry for each inspection view, readouts, labels and camera framing. |
+| Views | `src/views/cereal.js`, `src/views/brassica.js`, `src/views/legume.js` | Per crop family: geometry for each inspection view, readouts, labels and camera framing. |
 | UI | `src/main.js`, `src/ui/overlay.js` | Timeline, header, camera, render loop; live labels and measurement brackets. |
 | PWA | `src/pwa.js`, `sw.js`, `manifest.webmanifest` | Offline caching, update toast, install button. See [Installable app](#installable-app-pwa). |
 
@@ -53,6 +54,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Roots are drawn at true scale in the block and thin out at its bottom; real roots go far deeper, so the readout gives the rooting depth and a label says how far the roots continue. With a tall plant in frame, roots are drawn thicker than life so they stay visible (the readout says so).
 - Cereals: seminal roots from the seed (five for wheat, six for barley), then nodal (crown) roots from the crown from about the three-leaf stage, two per leaf up to 20, all branching, most root length in the topsoil. Rooting depth follows the AHDB wheat growth guide: main roots grow about 12 mm/day in autumn, 6 in winter and 18 in spring; about 1 m deep by GS31 and about 1.5 m (up to 2 m) by flowering. AHDB gives no separate barley figures, so winter barley uses the same depths. Spring barley roots less deeply: about 1 m by flowering (illustrative: AHDB's spring root growth rate of ~18 mm/day over the two months from emergence to flowering), with up to 14 crown roots.
 - Oilseed rape: a taproot that thickens at the top with the root collar, with laterals that get shorter with depth (root length density falls with depth, AHDB project PR402). The depths (about 45 cm at GS30, about 1.2 m by the end of flowering) are illustrative: AHDB gives no oilseed rape rooting-depth benchmark.
+- Field beans: a strong taproot with laterals, most of them near the top, and pink-brown nitrogen-fixing nodules on the upper roots from about the third leaf (Bean YEN takes the fourth node as the start of nodulation). Rooting depth about 0.8 m (spring) to 1 m (winter) by the end of flowering: illustrative, between SaskPulse's ~0.6 m average and AgroAtlas's 0.8–1.5 m. The seed is sown deep (8 cm spring, 10 cm winter in the model), so the soil block is deeper for beans.
 
 - Main shoot has 11 leaves; leaves are numbered down from the flag leaf (flag, leaf 2, 3, 4) as in UK advice. Leaves 1–6 sit on the crown, leaf 7 on the base node, leaves 8–11 on nodes 1–4.
 - Each blade emerges rolled from the sheath of the leaf below and unrolls; its ligule becomes visible when it is fully emerged.
@@ -70,6 +72,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Anthers ~1.6× thicker, ligule and auricles slightly larger than life.
 - Collar view bends the inspected blade back to expose the ligule, as you would in the field.
 - Oats: the ligule is drawn a little larger than life (about 4 mm).
+- Field beans: flowers about 1.15× life size, and in the Flowers and Pods views the leaves at the nodes being inspected are cut back to stubs so the racemes show (the readout says so).
 - Plant view: roots of a large plant are drawn thicker than life, and only the top of the root system (down to the bottom of the soil block) is shown; the readout says so and gives the real rooting depth.
 
 ### Winter barley (two-row)
@@ -117,6 +120,17 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Seeds ripen bottom-up: the GS83 seed colours by thirds match AHDB's swathing guide. About 225 pods per plant (AHDB: 6,000–8,000 pods/m² at 25–40 plants/m²); final height about 127 cm (AHDB: 100–160 cm).
 - Eight side racemes, one from each stem-leaf axil (smaller and later lower down), each lagging the main raceme.
 
+### Field beans (winter and spring)
+
+`?crop=winter_beans` / `?crop=spring_beans`, or Field beans in the header picker with the Winter/Spring toggle. AHDB has no bean growth-stage key, so this uses the BBCH faba bean key as reproduced in the Defra/APHA field bean VCU protocol and ADAS/PGRO Bean YEN guidance. Views: Plant, Nodes (leaves and scale leaves numbered for counting), Flowers, Pods (main stem) and Seed (an opened mid-stem pod with seeds at true size).
+
+- Hypogeal germination: the seed stays at sowing depth; the shoot grows up as a hook and straightens at emergence. Two scale leaves at the first two nodes are not counted; leaf 1 is at the third node.
+- Square, hollow stem; alternate leaves in two ranks; paripinnate leaves with no tendril, two leaflets on the first leaves rising to six; stipules with a dark nectary spot.
+- Principal stages overlap; the most advanced is recorded. Spring beans: leaf checkpoints GS10–GS16, then bud stages from GS50. Winter beans overwinter at about three leaves (GS13) and grow two basal side shoots in spring (GS21, GS22). Extended internodes (GS3x) are a readout.
+- A short raceme in each leaf axil from leaf 7 (spring) or leaf 6 (winter) up: estimates, as no UK first-flowering-node figure was found. White flowers with purple-veined standards and black-blotched wings open from the lowest node up; the BBCH raceme counts (GS61/63/65) are counted from the model. Only the lowest flowers of the lowest six or seven nodes set pods (1–2 per node); the rest drop.
+- Pods lengthen lowest first (GS7x), are held up when young and swing out as they fill, then blacken from the bottom up (GS8x). Seeds go from green to buff with a black hilum. Leaves die and blacken from the bottom; stems darken last (GS9x).
+- Spring: one stem, about 85 cm, 12 pods. Winter: three stems, about 105 cm, 18 pods. Heights, leaf and pod sizes and pods per node are illustrative.
+
 ## Installable app (PWA)
 
 | File | Role |
@@ -137,7 +151,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 Published at https://growthstage.leckerstonelabs.com.
 
-Illustrative and **not yet agronomically reviewed**. Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Oat dimensions are illustrative values tuned to the Opti-Oat benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
+Illustrative and **not yet agronomically reviewed**. Field bean dimensions, first flowering node and pods per node are estimates (no AHDB or UK benchmarks were found). Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Oat dimensions are illustrative values tuned to the Opti-Oat benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
 
 ## Roadmap
 

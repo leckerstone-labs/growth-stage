@@ -1,7 +1,8 @@
 // Crop registry. Each crop lives in src/crops/<crop>/ with its stage text
 // (stages.js), key states (keyframes.js), dimensions (params.js) and stage
 // rules (checks.js), assembled by its index.js. `family` picks the model and
-// views: cereals by default, 'brassica' for oilseed rape.
+// views: cereals by default, 'brassica' for oilseed rape, 'legume' for field
+// beans.
 //
 // Species and variants: winter and spring forms of a crop use the same AHDB
 // stage key, so they are variants of one species. Every variant is still a
@@ -16,8 +17,10 @@ import springBarley from './spring-barley/index.js';
 import springOats from './spring-oats/index.js';
 import winterOats from './winter-oats/index.js';
 import winterOilseedRape from './winter-oilseed-rape/index.js';
+import winterBeans from './winter-beans/index.js';
+import springBeans from './spring-beans/index.js';
 
-export const CROPS = [winterWheat, winterBarley, springBarley, springOats, winterOats, winterOilseedRape];
+export const CROPS = [winterWheat, winterBarley, springBarley, springOats, winterOats, winterOilseedRape, winterBeans, springBeans];
 
 // Unknown or missing ids fall back to the first crop.
 export const getCrop = (id) => CROPS.find((c) => c.id === id) || CROPS[0];

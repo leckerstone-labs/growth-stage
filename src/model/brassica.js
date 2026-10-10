@@ -59,7 +59,7 @@ export function polyAxis(pts) {
 // Axis that leans out from its base by `angle` and turns upwards to `top`
 // (both from vertical) over about `bend` cm as it grows (branches), in the
 // vertical plane at azimuth az.
-function leaningAxis(base, az, angle, top, length, bend = 10) {
+export function leaningAxis(base, az, angle, top, length, bend = 10) {
   const pts = [base];
   const step = 0.5;
   let p = base;
