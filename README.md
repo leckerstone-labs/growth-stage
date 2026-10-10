@@ -7,7 +7,7 @@ see what changes and the feature to check, and compare it with the plant in fron
 https://leckerstonelabs.com/projects/growth-stage
 
 - Winter wheat, winter and spring two-row barley, spring and winter oats (Zadoks GS05–GS92),
-  winter oilseed rape (BBCH key as used by AHDB, GS05–GS89), winter and spring field beans (BBCH
+  winter and spring oilseed rape (BBCH key as used by AHDB, GS05–GS89), winter and spring field beans (BBCH
   faba bean key as used by Defra/APHA and Bean YEN, GS05–GS97).
 - Inspection views: stem and node cutaway, collar and ligule, ear or panicle and grain, oilseed
   rape pods, bean flowers, pods and seed.
@@ -120,6 +120,14 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Seeds ripen bottom-up: the GS83 seed colours by thirds match AHDB's swathing guide. About 225 pods per plant (AHDB: 6,000–8,000 pods/m² at 25–40 plants/m²); final height about 127 cm (AHDB: 100–160 cm).
 - Eight side racemes, one from each stem-leaf axil (smaller and later lower down), each lagging the main raceme.
 
+### Spring oilseed rape
+
+`?crop=spring_oilseed_rape`, or Oilseed rape in the header picker with the Winter/Spring toggle. Same AHDB BBCH key and views as winter oilseed rape, whose stage text it reuses with spring overrides. AHDB has little on spring crops beyond sowing (February–April, at least 40–50 plants/m²), so timings come from Canadian and Ontario spring canola guides (Canola Council, Field Crop News, Bayer).
+
+- No overwintering rosette: 13 main-stem leaves (7 in a short, more upright rosette, 6 on the stem; Canola Council: 9–30), buds forming and the stem extending at about seven leaves (Bayer: by the six-leaf stage). No GS19 checkpoint: "9 or more leaves" is reached only after a more advanced stage applies.
+- Five side racemes (Ontario: 3–7), about 135 pods per plant and about 106 cm final height. The main stem is 59% of its final length at yellow bud (Canola Council: 30–60% just before flowering).
+- Estimates, to be checked on UK crops: height (AHDB's descriptive list scores spring varieties fairly short but gives no cm), pods per plant, every leaf and internode dimension, the thinner root collar, and rooting depth (about 1 m by the end of flowering).
+
 ### Field beans (winter and spring)
 
 `?crop=winter_beans` / `?crop=spring_beans`, or Field beans in the header picker with the Winter/Spring toggle. AHDB has no bean growth-stage key, so this uses the BBCH faba bean key as reproduced in the Defra/APHA field bean VCU protocol and ADAS/PGRO Bean YEN guidance. Views: Plant, Nodes (leaves and scale leaves numbered for counting), Flowers, Pods (main stem) and Seed (an opened mid-stem pod with seeds at true size).
@@ -151,13 +159,13 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 Published at https://growthstage.leckerstonelabs.com.
 
-Illustrative and **not yet agronomically reviewed**. Field bean dimensions, first flowering node and pods per node are estimates (no AHDB or UK benchmarks were found). Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Oat dimensions are illustrative values tuned to the Opti-Oat benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
+Illustrative and **not yet agronomically reviewed**. Field bean dimensions, first flowering node and pods per node are estimates (no AHDB or UK benchmarks were found). Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above (spring oilseed rape against Canadian spring canola guides). Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Oat dimensions are illustrative values tuned to the Opti-Oat benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
 
 ## Roadmap
 
 Ideas, not promises. Suggestions and pull requests are welcome.
 
-- **More crops:** six-row barley, spring oilseed rape.
+- **More crops:** six-row barley.
 - **Link to a stage:** a button that copies a link to the current crop, stage and view, for sharing or reporting problems.
 - **Agronomic review:** work through review comments and remove the draft label stage by stage.
 - **Field notes:** optionally record an observation (date, predominant stage and range, notes, photo) on the device, without needing an account.

@@ -17,10 +17,11 @@ import springBarley from './spring-barley/index.js';
 import springOats from './spring-oats/index.js';
 import winterOats from './winter-oats/index.js';
 import winterOilseedRape from './winter-oilseed-rape/index.js';
+import springOilseedRape from './spring-oilseed-rape/index.js';
 import winterBeans from './winter-beans/index.js';
 import springBeans from './spring-beans/index.js';
 
-export const CROPS = [winterWheat, winterBarley, springBarley, springOats, winterOats, winterOilseedRape, winterBeans, springBeans];
+export const CROPS = [winterWheat, winterBarley, springBarley, springOats, winterOats, winterOilseedRape, springOilseedRape, winterBeans, springBeans];
 
 // Unknown or missing ids fall back to the first crop.
 export const getCrop = (id) => CROPS.find((c) => c.id === id) || CROPS[0];
