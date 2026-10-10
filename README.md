@@ -6,8 +6,8 @@ see what changes and the feature to check, and compare it with the plant in fron
 **Try it:** https://growthstage.leckerstonelabs.com · **Project page:**
 https://leckerstonelabs.com/projects/growth-stage
 
-- Winter wheat and winter two-row barley (Zadoks GS05–GS92), winter oilseed rape (BBCH key as
-  used by AHDB, GS05–GS89).
+- Winter wheat, winter and spring two-row barley (Zadoks GS05–GS92), winter oilseed rape (BBCH key
+  as used by AHDB, GS05–GS89).
 - Inspection views: stem and node cutaway, collar and ligule, ear and grain, oilseed rape pods.
 - A Progressive Web App: install it on a phone and it works offline in the field.
 - Three.js, plain ES modules, no build step for development (three.js is vendored in `vendor/`).
@@ -32,7 +32,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 | Layer | File | What it holds |
 |---|---|---|
-| Crops | `src/crops/<crop>/` | Per crop: stage text and timeline positions (`stages.js`), key states (`keyframes.js`), dimensions (`params.js`) and stage rules (`checks.js`). Registered in `src/crops/index.js`; picked with `?crop=<id>` or the header picker. |
+| Crops | `src/crops/<crop>/` | Per crop: stage text and timeline positions (`stages.js`), key states (`keyframes.js`), dimensions (`params.js`) and stage rules (`checks.js`). Registered in `src/crops/index.js`; picked with `?crop=<id>` or the header picker. Winter and spring forms of a species (same stage key) are variants: the picker lists species, with a Winter/Spring toggle beside it. |
 | Key states | `src/crops/<crop>/keyframes.js` | One row of numbers per checkpoint (leaf clock, internode lengths, ear position, flowering, grain…). Interpolated with a monotone spline so nothing shrinks or overshoots between checkpoints. |
 | Morphology | `src/model/morphology.js`, `src/model/brassica.js` | Turns key states into a plant. Cereals: shoots, nodes, nested leaf sheaths, collars, blades, ear. Oilseed rape: seedling, leaf midribs, internodes, racemes and every flower/pod. Pure maths — also used by `npm run check`. |
 | Roots | `src/model/roots.js`, `src/render/roots-mesh.js` | Root systems for every crop from each crop's `ROOTS` (in `params.js`): fibrous (seminal then nodal roots, as in cereals) or a taproot with laterals (oilseed rape), with optional nodules for legumes. |
@@ -50,7 +50,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 - Every crop's plant view shows the same cut-away soil block: the far half of the surface and a vertical cut face, deepening as the plant grows (9 cm for a seedling, up to 26 cm for a full-grown plant). The oilseed rape leaves view, which looks straight down, shows the whole surface instead.
 - Roots are drawn at true scale in the block and thin out at its bottom; real roots go far deeper, so the readout gives the rooting depth and a label says how far the roots continue. With a tall plant in frame, roots are drawn thicker than life so they stay visible (the readout says so).
-- Cereals: seminal roots from the seed (five for wheat, six for barley), then nodal (crown) roots from the crown from about the three-leaf stage, two per leaf up to 20, all branching, most root length in the topsoil. Rooting depth follows the AHDB wheat growth guide: main roots grow about 12 mm/day in autumn, 6 in winter and 18 in spring; about 1 m deep by GS31 and about 1.5 m (up to 2 m) by flowering. AHDB gives no separate barley figures, so barley uses the same depths.
+- Cereals: seminal roots from the seed (five for wheat, six for barley), then nodal (crown) roots from the crown from about the three-leaf stage, two per leaf up to 20, all branching, most root length in the topsoil. Rooting depth follows the AHDB wheat growth guide: main roots grow about 12 mm/day in autumn, 6 in winter and 18 in spring; about 1 m deep by GS31 and about 1.5 m (up to 2 m) by flowering. AHDB gives no separate barley figures, so winter barley uses the same depths. Spring barley roots less deeply: about 1 m by flowering (illustrative: AHDB's spring root growth rate of ~18 mm/day over the two months from emergence to flowering), with up to 14 crown roots.
 - Oilseed rape: a taproot that thickens at the top with the root collar, with laterals that get shorter with depth (root length density falls with depth, AHDB project PR402). The depths (about 45 cm at GS30, about 1.2 m by the end of flowering) are illustrative: AHDB gives no oilseed rape rooting-depth benchmark.
 
 - Main shoot has 11 leaves; leaves are numbered down from the flag leaf (flag, leaf 2, 3, 4) as in UK advice. Leaves 1–6 sit on the crown, leaf 7 on the base node, leaves 8–11 on nodes 1–4.
@@ -80,6 +80,15 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Flowering happens inside the florets, so no anthers are drawn; the readout says so.
 - Ripe ears hang over (the top of the peduncle bends ~140°).
 - Hulled, spindle-shaped grain with an awn stub; paler leaves and pale straw ripening colours.
+
+### Spring barley (two-row)
+
+`?crop=spring_barley`, or Barley in the header picker and then Spring. The same stage key and text as winter barley, with the wording about winter replaced. Benchmarks: AHDB barley growth guide (spring varieties 10–20 cm shorter than winter ones, 57% of final height at flag leaf emergence, fewer tillers, 19–24 grains per ear, 82 °C days per leaf against 108) and the Teagasc Spring Barley Guide (Irish benchmark crops: 8 main-stem leaves (7–9), the top four on the extended stem, 59 cm, about 4 shoots per plant at the peak falling to about 3 ears). Differences from winter barley:
+
+- 8 main-stem leaves: leaves 1–3 on the crown, leaf 4 on the base node, leaves 5–8 on nodes 1–4.
+- Upright from the start (no prostrate winter habit). Tillers appear in quick succession between leaf 3 and the start of stem extension; two die during stem extension, leaving 3 ear-bearing shoots.
+- About 70 cm final height (between the AHDB and Teagasc figures), 53% of it at GS39; 21 grains per ear.
+- Shallower roots (see above).
 
 ### Winter oilseed rape
 
@@ -112,13 +121,13 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 Published at https://growthstage.leckerstonelabs.com.
 
-Illustrative and **not yet agronomically reviewed**. Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB barley benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
+Illustrative and **not yet agronomically reviewed**. Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
 
 ## Roadmap
 
 Ideas, not promises. Suggestions and pull requests are welcome.
 
-- **More crops:** spring barley (and a six-row variety), spring oats (a panicle rather than an ear), spring oilseed rape.
+- **More crops:** six-row barley, spring oats (a panicle rather than an ear), spring oilseed rape.
 - **Link to a stage:** a button that copies a link to the current crop, stage and view, for sharing or reporting problems.
 - **Agronomic review:** work through review comments and remove the draft label stage by stage.
 - **Field notes:** optionally record an observation (date, predominant stage and range, notes, photo) on the device, without needing an account.

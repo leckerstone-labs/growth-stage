@@ -12,9 +12,10 @@
 // a species' first variant listed is the one picked when switching to it.
 import winterWheat from './winter-wheat/index.js';
 import winterBarley from './winter-barley/index.js';
+import springBarley from './spring-barley/index.js';
 import winterOilseedRape from './winter-oilseed-rape/index.js';
 
-export const CROPS = [winterWheat, winterBarley, winterOilseedRape];
+export const CROPS = [winterWheat, winterBarley, springBarley, winterOilseedRape];
 
 // Unknown or missing ids fall back to the first crop.
 export const getCrop = (id) => CROPS.find((c) => c.id === id) || CROPS[0];

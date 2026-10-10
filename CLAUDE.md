@@ -4,7 +4,7 @@ Animated crop growth-stage guide (Leckerstone Labs), shipped as a Progressive We
 
 If present, `PROJECT_LOG.md` (session history, open threads) and `IDEA.md` (product brief) are the maintainer's local notes. They are git-ignored: read them for context, but never quote them in committed files.
 
-Current state: Three.js PWA with **winter wheat** and **winter barley (two-row)** (Zadoks GS05–GS92) and **winter oilseed rape** (AHDB BBCH key, GS05–GS89). Pick the crop in the header or with `?crop=winter_barley` / `?crop=winter_oilseed_rape`. The app opens at the crop's final stage unless `?gs=` names one (switching crop keeps the stage if the new crop has it). The PWA is the only app: there are no native iOS/Android apps. No build step for development; three.js is vendored in `vendor/`, and a service worker makes the published app work offline.
+Current state: Three.js PWA with **winter wheat**, **winter and spring barley (two-row)** (Zadoks GS05–GS92) and **winter oilseed rape** (AHDB BBCH key, GS05–GS89). Pick the crop in the header (species picker plus a Winter/Spring toggle) or with `?crop=winter_barley` / `?crop=spring_barley` / `?crop=winter_oilseed_rape`. The app opens at the crop's final stage unless `?gs=` names one (switching crop keeps the stage if the new crop has it). The PWA is the only app: there are no native iOS/Android apps. No build step for development; three.js is vendored in `vendor/`, and a service worker makes the published app work offline.
 
 ## Commands
 
@@ -62,7 +62,7 @@ Principles that make the model look right. Keep them when adding crops:
 
 ## Adding another crop
 
-The app picks the crop from the URL (`?crop=<id>`); the header has a picker that reloads with the new id, keeping the stage and view. Add a crop folder and register it in `src/crops/index.js`:
+The app picks the crop from the URL (`?crop=<id>`; unknown ids fall back to the first crop). Add a crop folder and register it in the flat `CROPS` list in `src/crops/index.js`:
 
 ```
 src/crops/<crop>/index.js       # assembles the pieces below
@@ -72,17 +72,24 @@ src/crops/<crop>/params.js      # leaf/sheath/blade tables, SHOOTS, stem radii, 
 src/crops/<crop>/checks.js      # stage rules for npm run check
 ```
 
+**Species and variants.** Winter and spring forms of a crop use the same AHDB stage key, so they are *variants* of one *species*, not separate crops in the UI. Each variant is still a full crop folder and crop object, registered in `CROPS`:
+
+- id `<variant>_<species>` (`winter_barley`, `spring_barley`, `spring_oats`, `winter_beans`…), plus `species` (`'barley'`), `speciesName` (`'Barley'`) and `variant` (`'winter'` | `'spring'`) in its `CROP` object. `name` stays the full name ("Spring barley"): it is the page title.
+- The header picker lists species (`SPECIES` in `src/crops/index.js`). A species with one variant shows its full name ("Winter wheat"); one with several shows `speciesName` and a Winter/Spring toggle (`#season`). Picking a species keeps the current variant if it has one, else its first registered variant (`cropForSpecies`). Switching crop or variant reloads with the new id, keeping the stage (if the code exists, else the final stage), view and seed.
+- A second variant should import the first one's files and override only what differs, not copy them. `src/crops/spring-barley/` is the example: `stages.js` maps winter barley's `STAGES` with a per-code table of replaced fields (text about winter, benchmarks, sources); `params.js` re-exports the shared collar/grain/colours and sets its own `MAIN`, `shoots`, `EAR` and `ROOTS`; `checks.js` calls winter barley's `barleyChecks()` with spring benchmark ranges and adds spring-only checks. `keyframes.js` is its own (don't reuse winter rows).
+- Keep the stage list the same as the other variant where you can (shared code calls `tAt()` for cereal codes such as 24, 32, 33, 39, so they must exist).
+
 Keep generic and shared: the interp/keyframe machinery, the shoot/leaf/sheath/collar/stem builders, seedling and roots, soil, overlay, camera, timeline UI, the grain-view framework, and the contact-sheet tooling. Make the inflorescence builder pluggable (spike, two/six-row spike, panicle, raceme).
 
 What differs per crop. These are reference notes: verify each against AHDB before relying on them.
 
-- **Barley (winter/spring):** winter two-row barley is done (`src/crops/winter-barley/`). How it differs from wheat in code: 14 leaves; `awnL` keyframe channel (awns bundled in the boot, visible at GS49 before the ear); `EAR.type: 'barley'` builder in `ear-mesh.js`; `EAR.neck` bends the shoot axis so ripe ears hang; `COLLAR` overrides for large clasping auricles; `GRAIN` for a hulled grain; `PALETTE` overrides. A six-row variety or spring barley would be a new crop folder (or a variant) reusing these.
+- **Barley (winter/spring):** winter and spring two-row barley are done (`src/crops/winter-barley/`, `src/crops/spring-barley/`). How it differs from wheat in code: 14 leaves; `awnL` keyframe channel (awns bundled in the boot, visible at GS49 before the ear); `EAR.type: 'barley'` builder in `ear-mesh.js`; `EAR.neck` bends the shoot axis so ripe ears hang; `COLLAR` overrides for large clasping auricles; `GRAIN` for a hulled grain; `PALETTE` overrides. A six-row variety would be a new crop folder reusing these.
   - Same Zadoks scale and stem-extension rules as wheat.
   - Auricles are large, hairless and clasping (wheat's are small and hairy); AHDB's GS39 illustration has a wheat-vs-barley ligule inset.
   - Long awns, so GS49 (awns visible) is a real stage.
   - Three spikelets per rachis node: two-row (only the central one fertile) or six-row.
   - Flowering largely happens inside the boot, so anthers are seldom seen.
-  - Spring barley has fewer leaves (~8–10), no prostrate winter habit and a shorter tillering phase.
+  - Spring barley (done): 8 leaves (Teagasc 7–9), upright from the start, tillers that appear closer together in leaf terms (the optional `appear` field on a shoot def), ~70 cm, 21 grains per ear (optional `EAR.nodes`), shallower roots.
   - Ear "nods" strongly when ripe.
 - **Oats (spring):** the inflorescence is a panicle, not a spike, so it needs a new builder. No auricles; a prominent ligule. Same Zadoks codes.
 - **Oilseed rape:** winter OSR is done (`src/crops/winter-oilseed-rape/`, `family: 'brassica'`). AHDB uses the BBCH two-digit key for OSR, so codes look like cereal ones but mean different things (GS30 rosette, GS51 green bud, GS59 yellow bud, GS65 full flower, GS8x share of pods ripe).
@@ -90,7 +97,7 @@ What differs per crop. These are reference notes: verify each against AHDB befor
   - Model: rosette leaves on a crown, stem leaves one per node, side racemes from all eight stem-leaf axils (smaller and later lower down). Each side raceme runs the main raceme's keyframes with a lag (`BRANCHES[].lag`).
   - Every flower position is tracked from bud → flower → pod via the `opened`/`fallen`/`podFull`/`seed` channels, so the BBCH percentages are counted, not drawn.
   - Spring OSR would be a new folder reusing `brassica.js` with fewer leaves and no winter rosette.
-- **Spring crops in general:** sown in spring, fewer leaves, faster development. Use separate `params.js`/`keyframes.js`; don't reuse winter rows.
+- **Spring crops in general:** sown in spring, fewer leaves, faster development. Make them the spring variant of the species (see above), with their own `params.js`/`keyframes.js`; don't reuse winter rows. With few leaves, tillering (GS21–GS24) has to fit between leaf 3 and the start of stem extension: set `appear` on the tiller defs.
 
 ## Reference material
 
@@ -103,7 +110,7 @@ What differs per crop. These are reference notes: verify each against AHDB befor
 ## Debugging and visual review
 
 - `window.__plant` in the browser has `crop`, `model`, `view`, `go(code, mode)`, `setT(t)`, `setMode(mode)`, `state`, `plantMesh` (a `BrassicaMesh` for OSR), `earMesh` (cereals), `camera` and `controls`.
-- **Shared-code regression check:** before editing anything shared, capture a fingerprint of every stage × view for wheat and barley in the browser: readout text, label texts, and a checksum of visible geometry positions in `plantMesh.group` and `earMesh.group`. Capture it again after the edit and `cmp` the two. Used for the crop-registry, views and OSR changes.
+- **Shared-code regression check:** before editing anything shared, capture a fingerprint of every stage × view for every crop in the browser: readout text, label texts, and a checksum of visible geometry positions in `plantMesh.group` and `earMesh.group`. Capture it again after the edit and `cmp` the two. Used for the crop-registry, views and OSR changes.
 - **Contact sheets:** in Playwright, `eval` the function in `scripts/contact-sheet.js` with a list of stage codes and a view, then save the returned data URL with `python3 scripts/save-dataurl.py <evaluate-output.txt> out.png`. This is the fastest way to review the whole lifecycle; use one per view.
 - **Close-ups:** set `__plant.state.goal.{target,height,width}` and `state.enteringMode = true`.
 - **Overflow / poke-through:** transform instance vertices and compare their distance from `plantMesh.axes.get(id)` with the sheath radius at that height. Attribute each instance to its own shoot, because neighbouring tillers' ears sit within millimetres near the crown.
