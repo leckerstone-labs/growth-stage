@@ -3,10 +3,22 @@
 // typical field measurement), so keyframe or morphology edits can't silently
 // break a stage.
 //
+// The rules are shared with spring wheat (src/crops/spring-wheat/checks.js),
+// which passes its own thickness ranges to wheatChecks().
+//
 // Helpers: { at(code) → measureMain(), plantAt(code) → computePlant(), expect(code,
 // ok, msg), SEED_DEPTH }
 
-export function checks({ at, plantAt, expect, SEED_DEPTH }) {
+// Thickness targets (mm) for winter wheat: typical field values, to be
+// confirmed.
+export const WINTER = {
+  pseudostem: { 13: [1.5, 2.5], 21: [2, 3.5], 30: [5, 8] },
+  stem39: [3, 5],
+};
+
+export const checks = (helpers) => wheatChecks(helpers, WINTER);
+
+export function wheatChecks({ at, plantAt, expect, SEED_DEPTH }, W) {
   // Germination and leaf production.
   let p = plantAt(5);
   expect(5, p.main.seedling.coleoLen === 0 && p.main.seedling.rootDepth > 0, 'radicle only, no coleoptile');
@@ -54,14 +66,12 @@ export function checks({ at, plantAt, expect, SEED_DEPTH }) {
   expect(55, Math.abs(m.earEmerged - 0.5) < 0.1, `half emerged (${(m.earEmerged * 100).toFixed(0)}%)`);
   m = at(59);
   expect(59, m.earEmerged >= 1, 'ear fully emerged');
-  // Thickness targets (mm) — typical field values, to be confirmed.
+  // Thickness targets (mm).
   const mm = (x) => x.toFixed(1);
-  m = at(13);
-  expect(13, m.pseudostemDiam >= 1.5 && m.pseudostemDiam <= 2.5, `pseudostem 1.5–2.5 mm (${mm(m.pseudostemDiam)})`);
-  m = at(21);
-  expect(21, m.pseudostemDiam >= 2 && m.pseudostemDiam <= 3.5, `pseudostem 2–3.5 mm (${mm(m.pseudostemDiam)})`);
-  m = at(30);
-  expect(30, m.pseudostemDiam >= 5 && m.pseudostemDiam <= 8, `pseudostem 5–8 mm (${mm(m.pseudostemDiam)})`);
+  for (const [code, [lo, hi]] of Object.entries(W.pseudostem)) {
+    m = at(+code);
+    expect(+code, m.pseudostemDiam >= lo && m.pseudostemDiam <= hi, `pseudostem ${lo}–${hi} mm (${mm(m.pseudostemDiam)})`);
+  }
   m = at(39);
-  expect(39, m.stemDiam >= 3 && m.stemDiam <= 5, `stem 3–5 mm (${mm(m.stemDiam)})`);
+  expect(39, m.stemDiam >= W.stem39[0] && m.stemDiam <= W.stem39[1], `stem ${W.stem39[0]}–${W.stem39[1]} mm (${mm(m.stemDiam)})`);
 }

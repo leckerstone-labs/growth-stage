@@ -6,7 +6,7 @@ see what changes and the feature to check, and compare it with the plant in fron
 **Try it:** https://growthstage.leckerstonelabs.com · **Project page:**
 https://leckerstonelabs.com/projects/growth-stage
 
-- Winter wheat, winter and spring two-row barley, spring and winter oats (Zadoks GS05–GS92),
+- Winter and spring wheat, winter and spring two-row barley, spring and winter oats (Zadoks GS05–GS92),
   winter oilseed rape (BBCH key as used by AHDB, GS05–GS89), winter and spring field beans (BBCH
   faba bean key as used by Defra/APHA and Bean YEN, GS05–GS97).
 - Inspection views: stem and node cutaway, collar and ligule, ear or panicle and grain, oilseed
@@ -52,7 +52,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 - Every crop's plant view shows the same cut-away soil block: the far half of the surface and a vertical cut face, deepening as the plant grows (9 cm for a seedling, up to 26 cm for a full-grown plant). The oilseed rape leaves view, which looks straight down, shows the whole surface instead.
 - Roots are drawn at true scale in the block and thin out at its bottom; real roots go far deeper, so the readout gives the rooting depth and a label says how far the roots continue. With a tall plant in frame, roots are drawn thicker than life so they stay visible (the readout says so).
-- Cereals: seminal roots from the seed (five for wheat, six for barley), then nodal (crown) roots from the crown from about the three-leaf stage, two per leaf up to 20, all branching, most root length in the topsoil. Rooting depth follows the AHDB wheat growth guide: main roots grow about 12 mm/day in autumn, 6 in winter and 18 in spring; about 1 m deep by GS31 and about 1.5 m (up to 2 m) by flowering. AHDB gives no separate barley figures, so winter barley uses the same depths. Spring barley roots less deeply: about 1 m by flowering (illustrative: AHDB's spring root growth rate of ~18 mm/day over the two months from emergence to flowering), with up to 14 crown roots.
+- Cereals: seminal roots from the seed (five for wheat, six for barley), then nodal (crown) roots from the crown from about the three-leaf stage, two per leaf up to 20, all branching, most root length in the topsoil. Rooting depth follows the AHDB wheat growth guide: main roots grow about 12 mm/day in autumn, 6 in winter and 18 in spring; about 1 m deep by GS31 and about 1.5 m (up to 2 m) by flowering. AHDB gives no separate barley figures, so winter barley uses the same depths. Spring barley roots less deeply: about 1 m by flowering (illustrative: AHDB's spring root growth rate of ~18 mm/day over the two months from emergence to flowering), with up to 14 crown roots. Spring wheat likewise: about 1.1 m by flowering (illustrative), up to 14 crown roots.
 - Oilseed rape: a taproot that thickens at the top with the root collar, with laterals that get shorter with depth (root length density falls with depth, AHDB project PR402). The depths (about 45 cm at GS30, about 1.2 m by the end of flowering) are illustrative: AHDB gives no oilseed rape rooting-depth benchmark.
 - Field beans: a strong taproot with laterals, most of them near the top, and pink-brown nitrogen-fixing nodules on the upper roots from about the third leaf (Bean YEN takes the fourth node as the start of nodulation). Rooting depth about 0.8 m (spring) to 1 m (winter) by the end of flowering: illustrative, between SaskPulse's ~0.6 m average and AgroAtlas's 0.8–1.5 m. The seed is sown deep (8 cm spring, 10 cm winter in the model), so the soil block is deeper for beans.
 
@@ -74,6 +74,15 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Oats: the ligule is drawn a little larger than life (about 4 mm).
 - Field beans: flowers about 1.15× life size, and in the Flowers and Pods views the leaves at the nodes being inspected are cut back to stubs so the racemes show (the readout says so).
 - Plant view: roots of a large plant are drawn thicker than life, and only the top of the root system (down to the bottom of the soil block) is shown; the readout says so and gives the real rooting depth.
+
+### Spring wheat
+
+`?crop=spring_wheat`, or Wheat in the header picker and then Spring. The same stage key and text as winter wheat, with the wording about winter replaced. AHDB has no spring wheat growth guide; benchmarks: AHDB Recommended List 2022/23 (spring wheats 72–80 cm without PGR, against 82–95 cm for winter wheats), the AHDB wheat guide (later sowing means fewer leaves), NDSU Extension (most spring wheats make 8 main-stem leaves; North American, so a guide only) and an agronomist's advice in Farmers Weekly (drilled from late winter to April, tillers less than winter wheat, about 600 ears/m² from 325–400 seeds/m²). Differences from winter wheat:
+
+- 8 main-stem leaves: leaves 1–3 on the crown, leaf 4 on the base node, leaves 5–8 on nodes 1–4.
+- Upright from the start (no prostrate winter habit). Tillers appear in quick succession between leaf 3 and the start of stem extension; three die during stem extension and booting, leaving 2 ear-bearing shoots (about 600 ears/m²).
+- About 69 cm final height (10 cm below the winter wheat model, as in the RL), 44% of it at GS39. A slightly smaller ear: 8 cm and 19 spikelets (estimates; optional `EAR.spikelets`).
+- Shallower roots (see above).
 
 ### Winter barley (two-row)
 
@@ -151,7 +160,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 Published at https://growthstage.leckerstonelabs.com.
 
-Illustrative and **not yet agronomically reviewed**. Field bean dimensions, first flowering node and pods per node are estimates (no AHDB or UK benchmarks were found). Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Oat dimensions are illustrative values tuned to the Opti-Oat benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
+Illustrative and **not yet agronomically reviewed**. Field bean dimensions, first flowering node and pods per node are estimates (no AHDB or UK benchmarks were found). Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Oat dimensions are illustrative values tuned to the Opti-Oat benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear). Spring wheat leaf sizes, ear size and timing within the season are estimates.
 
 ## Roadmap
 
