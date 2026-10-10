@@ -1,10 +1,10 @@
 // Service worker: makes Growth Stage work offline after the first visit.
 //
 // scripts/build-site.sh stamps two things into the copy in dist/:
-//   - VERSION: the git commit plus a hash of every shipped file, so any change
-//     to the site gives a new sw.js. The browser notices the byte change,
-//     installs the new worker alongside the old one and the page shows an
-//     "Update available" toast (src/pwa.js).
+//   - VERSION: a hash of every shipped file (and nothing else, not the git
+//     commit), so sw.js changes exactly when the site does. The browser
+//     notices the byte change, installs the new worker alongside the old one
+//     and the page shows an "Update available" toast (src/pwa.js).
 //   - PRECACHE: every file in dist/, so the whole app is cached on install.
 // Unbuilt (npm run serve with ?sw=1) the tokens are left as they are: the
 // version reads "dev" and nothing is precached, but files are still cached as

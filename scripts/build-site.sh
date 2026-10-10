@@ -12,15 +12,17 @@ cp -R index.html styles.css manifest.webmanifest sw.js favicon.ico og-image.png 
 find dist -name '.DS_Store' -delete
 
 # --- Service worker version and precache list -------------------------------
-# Version = git commit (+ "-dirty" for uncommitted changes) + a hash of every
-# shipped file. Any change to what ships changes sw.js, which is how browsers
-# find out there is an update.
+# Version = a hash of every shipped file (names and contents), and nothing
+# else. Browsers install a new worker, and the app shows "Update available",
+# whenever the bytes of sw.js change, so the version must change exactly when
+# what ships changes. Don't add the git commit, a date or anything about the
+# machine: a commit that only touches docs or scripts, or rebuilding the same
+# code, would then tell every user there is an update when there isn't.
+# (Changes to the sw.js template change sw.js itself, so they update too.)
+version=$(cd dist && find . -type f ! -name sw.js | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256 | cut -c1-12)
 commit=$(git rev-parse --short HEAD 2>/dev/null || echo nogit)
-[ -n "$(git status --porcelain 2>/dev/null)" ] && commit="$commit-dirty"
-content=$(cd dist && find . -type f ! -name sw.js | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256 | cut -c1-8)
-version="$commit-$content"
 
-python3 - "$version" <<'PY'
+python3 - "$version" "$commit" <<'PY'
 import json, os, sys
 version = sys.argv[1]
 files = []
@@ -38,7 +40,7 @@ assert start in sw and end in sw and '__BUILD_VERSION__' in sw, 'sw.js tokens mi
 sw = sw[:sw.index(start)] + json.dumps(files, indent=2) + sw[sw.index(end) + len(end):]
 sw = sw.replace('__BUILD_VERSION__', version)
 open('dist/sw.js', 'w').write(sw)
-print(f'Service worker {version}: {len(files)} files precached')
+print(f'Service worker {version}: {len(files)} files precached (built from commit {sys.argv[2]})')
 PY
 
 # --- Headers -----------------------------------------------------------------

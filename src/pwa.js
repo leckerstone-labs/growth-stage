@@ -27,23 +27,28 @@ if (LOCAL && !WANT_SW && 'serviceWorker' in navigator) {
 }
 
 if (WANT_SW) {
-  // Reload once, after the new worker has taken over (the user tapped Reload).
+  // A new worker took over. If this tab asked for it (Reload), reload once.
+  // Otherwise another tab applied the update, so this tab's toast is stale:
+  // hide it. (The first install also fires this, via clients.claim(); then
+  // there is no toast and nothing to do.)
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!reloading && updateRequested) { reloading = true; location.reload(); }
+    if (updateRequested) {
+      if (!reloading) { reloading = true; location.reload(); }
+    } else hideUpdate();
   });
 
   window.addEventListener('load', async () => {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js');
       // A worker already waiting from an earlier visit.
-      if (reg.waiting && navigator.serviceWorker.controller) showUpdate(reg.waiting);
+      if (reg.waiting && navigator.serviceWorker.controller) showUpdate(reg);
       reg.addEventListener('updatefound', () => {
         const w = reg.installing;
         if (!w) return;
         w.addEventListener('statechange', () => {
           // "installed" with an existing controller = an update (not the first install).
-          if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdate(w);
+          if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdate(reg);
         });
       });
       // Phones keep installed apps open for days: look for updates when the
@@ -57,19 +62,26 @@ if (WANT_SW) {
 }
 
 let updateRequested = false;
-function showUpdate(worker) {
+function showUpdate(reg) {
   const toast = $('update-toast');
   toast.hidden = false;
   requestAnimationFrame(() => toast.classList.add('show'));
   $('update-reload').onclick = () => {
+    // Ask whichever worker is waiting now: if an even newer version arrived
+    // while the toast was up, the one that first showed it is gone.
+    const w = reg.waiting;
     updateRequested = true;
     $('update-reload').disabled = true;
-    worker.postMessage('skipWaiting');
+    if (w) w.postMessage('skipWaiting');
+    else location.reload(); // already applied (e.g. by another tab)
   };
-  $('update-dismiss').onclick = () => {
-    toast.classList.remove('show');
-    setTimeout(() => (toast.hidden = true), 300);
-  };
+  $('update-dismiss').onclick = hideUpdate;
+}
+function hideUpdate() {
+  const toast = $('update-toast');
+  if (toast.hidden) return;
+  toast.classList.remove('show');
+  setTimeout(() => (toast.hidden = true), 300);
 }
 
 // ---------------------------------------------------------------------------
