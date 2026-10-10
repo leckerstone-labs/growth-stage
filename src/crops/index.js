@@ -13,9 +13,11 @@
 import winterWheat from './winter-wheat/index.js';
 import winterBarley from './winter-barley/index.js';
 import springBarley from './spring-barley/index.js';
+import springOats from './spring-oats/index.js';
+import winterOats from './winter-oats/index.js';
 import winterOilseedRape from './winter-oilseed-rape/index.js';
 
-export const CROPS = [winterWheat, winterBarley, springBarley, winterOilseedRape];
+export const CROPS = [winterWheat, winterBarley, springBarley, springOats, winterOats, winterOilseedRape];
 
 // Unknown or missing ids fall back to the first crop.
 export const getCrop = (id) => CROPS.find((c) => c.id === id) || CROPS[0];

@@ -136,7 +136,11 @@ export function makeAxis(sh, sMax) {
 //   stem (radians), rise/width: auricle claw size (cm), flare: how far the
 //   upper edge stands out from the stem (× width), overlap: extra radius
 //   for the outer auricle where they cross, hairs: hairy auricle margins.
-const WHEAT_COLLAR = { ligule: 0.2, sweep: 1.25, rise: 0.12, width: 0.14, flare: 0.4, overlap: 0, hairs: true };
+//   auricles: false for crops without them (oats). ligArc: how far the
+//   ligule reaches round each side of the blade (radians); ligRound: how
+//   much lower its edge is at the sides (0..1); ligTeeth: a finely toothed
+//   (erose) edge, as on the large, membranous oat ligule.
+const WHEAT_COLLAR = { ligule: 0.2, sweep: 1.25, rise: 0.12, width: 0.14, flare: 0.4, overlap: 0, hairs: true, auricles: true, ligArc: 1.2, ligRound: 0.35, ligTeeth: 0 };
 
 // ---------------------------------------------------------------------------
 // Builder
@@ -179,7 +183,7 @@ export class PlantMesh {
     // Stem view: leaves are trimmed off just above the ear/top node, like the
     // split shoot in the AHDB node-counting diagram.
     const ms = plant.main;
-    const trimS = opts.mode === 'stem' ? Math.max(ms.earTop, ms.nodeS[4]) + 2.5 : Infinity;
+    const trimS = opts.mode === 'stem' ? Math.max(ms.earTop, ms.node4) + 2.5 : Infinity;
     const foldN = opts.mode === 'collar' ? ([...ms.leaves].reverse().find((l) => l.emerge >= 1) || {}).n : -1;
     for (const sh of shoots) this.buildShoot(sh, plant, { ...opts, section, trimS, foldN, isMain: sh === plant.main });
     for (const b of [this.blades, this.sheaths, this.stems, this.ligules, this.auricles, this.hairs, this.roots]) b.commit();
@@ -242,8 +246,8 @@ export class PlantMesh {
       // Hollow internodes: a cavity (inward-facing tube with end caps) inside
       // each elongated internode. Nodes stay solid, as in a real stem.
       const segs = [];
-      for (let m = 0; m < 4; m++) segs.push([nodes[m], nodes[m + 1]]);
-      segs.push([nodes[4], stemTop]);
+      for (let m = 0; m < nodes.length - 1; m++) segs.push([nodes[m], nodes[m + 1]]);
+      segs.push([nodes[nodes.length - 1], stemTop]);
       for (const [a0, a1] of segs) {
         const s0 = a0 + 0.14, s1 = a1 - (a1 === stemTop ? 0.05 : 0.14);
         if (s1 - s0 < 0.12) continue;
@@ -522,14 +526,17 @@ export class PlantMesh {
     // slightly here so it can be seen).
     const ligH = C.ligule * sc; // ~1–2 mm in life, slightly exaggerated
     const ligCol = mix(P.ligule, P.leafDead, L.sen * 0.6);
-    this.ligules.grid(2, RAD, (i, j, o) => {
-      const a = L.az - 1.2 + (2.4 * j) / RAD; // on the blade side
+    const LRAD = C.ligTeeth ? 28 : RAD;
+    this.ligules.grid(2, LRAD, (i, j, o) => {
+      const a = L.az - C.ligArc + (2 * C.ligArc * j) / LRAD; // on the blade side
       const f = i / 2;
-      const edge = 1 - 0.35 * Math.pow(Math.abs(j / RAD - 0.5) * 2, 2);
+      let edge = 1 - C.ligRound * Math.pow(Math.abs(j / LRAD - 0.5) * 2, 2);
+      if (C.ligTeeth) edge *= 1 - C.ligTeeth * (j % 2) * (0.5 + hash('lt', sh.k, L.n, j));
       axis.at(L.collarS + ligH * f * edge, fr);
       o.p.copy(fr.p).addScaledVector(axis.radial(fr.q, a), r * (0.93 - 0.05 * f));
       o.c = ligCol; o.u = 0; o.v = 0;
     });
+    if (!C.auricles) return;
     // Auricles: two claw-like lobes at the base of the blade that wrap round
     // the stem. Wheat auricles are small and hairy, wrapping part way round;
     // barley's are large and hairless and cross over on the far side.

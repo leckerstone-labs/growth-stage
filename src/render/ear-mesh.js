@@ -1,5 +1,6 @@
 // Cereal ears built from instanced parts. The crop's EAR.type picks the
-// builder: 'wheat' (buildEar) or 'barley' (buildBarleyEar, two-row).
+// builder: 'wheat' (buildEar), 'barley' (buildBarleyEar, two-row) or
+// 'panicle' (oats: render/panicle-mesh.js).
 //
 // Structure of a wheat ear (spike), as modelled:
 //   - ~20 spikelets, one per rachis node, alternating on opposite sides of a
@@ -28,6 +29,7 @@
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep, hash } from '../model/interp.js';
 import { PALETTE as P, mix, rgb } from './materials.js';
+import { initPanicle, buildPanicle } from './panicle-mesh.js';
 
 const DEG = Math.PI / 180;
 
@@ -39,7 +41,7 @@ function earColour(ripe) {
 
 // Boat-shaped part (glume, lemma): origin at the base, length along +y,
 // width along x, depth along z. Rounded base, pointed tip, keel on +z.
-function boatGeometry(len, width, depth, { keel = 0.25, beak = 0 } = {}) {
+export function boatGeometry(len, width, depth, { keel = 0.25, beak = 0 } = {}) {
   const U = 14, V = 12;
   const pos = [], idx = [], uv = [];
   const prof = (u) => {
@@ -137,15 +139,18 @@ export class EarMesh {
     this.rachis = inst(rach, M.ear, MAX_EARS * per.rachis);
     this.tmp = { m: new THREE.Matrix4(), m2: new THREE.Matrix4(), q: new THREE.Quaternion(), e: new THREE.Euler(), v: new THREE.Vector3(), s: new THREE.Vector3(), c: new THREE.Color() };
     this.anchors = {};
+    // Panicle crops (oats) get their own branch, glume and floret meshes.
+    this.type = model.crop.params.EAR.type;
+    this.extraCounts = this.type === 'panicle' ? initPanicle(this, inst, boatGeometry, MAX_EARS) : {};
   }
 
   // shoots: [{ sh, axis }]
   build(plant, items, opts) {
-    const counts = { glumes: 0, lemmas: 0, anthers: 0, filaments: 0, awns: 0, awnSegs: 0, rachis: 0 };
+    const counts = { glumes: 0, lemmas: 0, anthers: 0, filaments: 0, awns: 0, awnSegs: 0, rachis: 0, ...this.extraCounts };
     // Cleared each build: with no main ear yet (going back to a seedling
     // stage), stale anchors from a later stage would stretch the framing.
     this.anchors = {};
-    const builder = this.model.crop.params.EAR.type === 'barley' ? this.buildBarleyEar : this.buildEar;
+    const builder = { barley: this.buildBarleyEar, panicle: buildPanicle }[this.type] || this.buildEar;
     for (const it of items.slice(0, MAX_EARS)) builder.call(this, it.sh, it.axis, opts, counts, it.sh === plant.main);
     for (const k of Object.keys(counts)) {
       this[k].count = counts[k];

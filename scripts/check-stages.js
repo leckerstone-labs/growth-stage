@@ -19,7 +19,10 @@ for (const crop of CROPS.filter((c) => !only || c.id === only)) {
       console.log(model.table.row(s, p, measureMain(p)));
     }
   } else {
-    console.log(' GS     t | i1    i2    i3    i4   ped | nodes flagE ligule  earTip-lig emerged boot  height pseudo stem shoots');
+    // One column per elongating internode (4 for wheat and barley, 5 for oats).
+    const nInt = measureMain(computePlant(100)).ints.length;
+    const intCols = Array.from({ length: nInt }, (_, i) => `i${i + 1}`.padEnd(6)).join('');
+    console.log(` GS     t | ${intCols.trimEnd()}   ped | nodes flagE ligule  earTip-lig emerged boot  height pseudo stem shoots`);
     for (const s of crop.stages) {
       const p = computePlant(s.t);
       const m = measureMain(p);

@@ -6,9 +6,10 @@ see what changes and the feature to check, and compare it with the plant in fron
 **Try it:** https://growthstage.leckerstonelabs.com · **Project page:**
 https://leckerstonelabs.com/projects/growth-stage
 
-- Winter wheat, winter and spring two-row barley (Zadoks GS05–GS92), winter oilseed rape (BBCH key
-  as used by AHDB, GS05–GS89).
-- Inspection views: stem and node cutaway, collar and ligule, ear and grain, oilseed rape pods.
+- Winter wheat, winter and spring two-row barley, spring and winter oats (Zadoks GS05–GS92),
+  winter oilseed rape (BBCH key as used by AHDB, GS05–GS89).
+- Inspection views: stem and node cutaway, collar and ligule, ear or panicle and grain, oilseed
+  rape pods.
 - A Progressive Web App: install it on a phone and it works offline in the field.
 - Three.js, plain ES modules, no build step for development (three.js is vendored in `vendor/`).
 
@@ -68,6 +69,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Stem view widens tall shoots (×1–4) so nodes stay legible.
 - Anthers ~1.6× thicker, ligule and auricles slightly larger than life.
 - Collar view bends the inspected blade back to expose the ligule, as you would in the field.
+- Oats: the ligule is drawn a little larger than life (about 4 mm).
 - Plant view: roots of a large plant are drawn thicker than life, and only the top of the root system (down to the bottom of the soil block) is shown; the readout says so and gives the real rooting depth.
 
 ### Winter barley (two-row)
@@ -89,6 +91,20 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Upright from the start (no prostrate winter habit). Tillers appear in quick succession between leaf 3 and the start of stem extension; two die during stem extension, leaving 3 ear-bearing shoots.
 - About 70 cm final height (between the AHDB and Teagasc figures), 53% of it at GS39; 21 grains per ear.
 - Shallower roots (see above).
+
+### Oats (spring and winter)
+
+`?crop=spring_oats` / `?crop=winter_oats`, or Oats in the header picker and then Spring or Winter. AHDB has no oat growth guide, so the benchmarks come from the Opti-Oat *Oat Growth Guide* (2019; UK trials, spring cv. Canyon, winter cv. Mascani; not an AHDB publication), which uses the same Zadoks key. Identification features are from AHDB's wild-oat page. Differences from wheat and barley:
+
+- A **panicle** (`render/panicle-mesh.js`, `EAR.type: 'panicle'`, laid out by `PANICLE` in `params.js`): six whorls of branches on the rachis (Opti-Oat: 5–7, often about four branches), fewer spikelets per whorl towards the top (about 75% on the bottom three), large papery glumes round two florets, spikelets hanging on pedicels. 22 spikelets (44 grains, spring) and 24 (48 grains, winter; benchmark 47). In the boot it is folded up and squeezed into the flag-leaf sheath (checked numerically); each whorl spreads once it is clear of the ligule, the branch tips droop as the grain fills, and the rachis arches over as it ripens.
+- No GS49 (oats are effectively awnless); GS51 is the first spikelet of the panicle, measured from the flag-leaf ligule as for ears. GS91 (grain hard, difficult to divide) replaces GS89, as in the Opti-Oat key.
+- Flowering runs from the top of the panicle down, lower floret first; only half the florets push their anthers out.
+- No auricles; a large, membranous, finely toothed ligule. Hairless leaves that twist anticlockwise (wheat and barley clockwise). Paler, bluish-green leaves; panicles ripen to pale straw.
+- Six internodes (five nodes on the extended stem, the peduncle longest). Hulled, slender grain with green husk ripening to cream.
+- Spring oats: 9 main-stem leaves, upright, the main shoot plus two tillers (one dies), 46 cm to the flag ligule at GS39, 70/91 cm (ligule/panicle top) at GS59, 108 cm final.
+- Winter oats: 11 leaves, prostrate over winter, three tillers (two die), 45 cm at GS39, 65/93 cm at GS59, 104 cm final. The text adds the winter benchmarks (overwinter survival, dates).
+- Shoot counts follow the Opti-Oat benchmarks (spring about 1.7 shoots per plant at GS31 and 1.4 panicles at harvest; winter about 3 and 2), so spring oats have no GS23/GS24 checkpoints and winter oats no GS24.
+- Estimates, to be measured on real crops: leaf numbers and every leaf, sheath, panicle and spikelet dimension; three seminal roots and a wider crown-root spread; rooting depths (about 1 m by flowering for spring oats, 1.6 m for winter oats, read loosely from the Opti-Oat charts).
 
 ### Winter oilseed rape
 
@@ -121,13 +137,13 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 
 Published at https://growthstage.leckerstonelabs.com.
 
-Illustrative and **not yet agronomically reviewed**. Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
+Illustrative and **not yet agronomically reviewed**. Oilseed rape dimensions and timings are illustrative values checked against the AHDB OSR benchmarks above. Barley dimensions are illustrative values tuned to the AHDB (and, for spring barley, Teagasc) benchmarks above. Oat dimensions are illustrative values tuned to the Opti-Oat benchmarks above. Wheat dimensions are typical UK winter wheat values, tuned against AHDB benchmarks (≈34 cm at GS39, ≈69 cm to ear base after flowering, ~20 spikelets, ~48 grains/ear).
 
 ## Roadmap
 
 Ideas, not promises. Suggestions and pull requests are welcome.
 
-- **More crops:** six-row barley, spring oats (a panicle rather than an ear), spring oilseed rape.
+- **More crops:** six-row barley, spring oilseed rape.
 - **Link to a stage:** a button that copies a link to the current crop, stage and view, for sharing or reporting problems.
 - **Agronomic review:** work through review comments and remove the draft label stage by stage.
 - **Field notes:** optionally record an observation (date, predominant stage and range, notes, photo) on the device, without needing an account.

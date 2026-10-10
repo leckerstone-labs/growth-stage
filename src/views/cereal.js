@@ -18,6 +18,10 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
   const earMesh = new EarMesh(M, model);
   scene.add(plantMesh.group, earMesh.group);
   const grainView = new GrainView(crop.params.GRAIN);
+  // What the crop calls its inflorescence in the readout and labels: the ear
+  // (wheat, barley) or the panicle (oats).
+  const ear = crop.ui.ear || 'ear';
+  const Ear = ear[0].toUpperCase() + ear.slice(1);
 
   function enabled(mode, t) {
     if (mode === 'grain') return t >= tAt(69) - 1;
@@ -45,10 +49,12 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
       setGhost(M, boot);
       soil.group.visible = true;
       // Tall shoots are widened in the stem view so nodes stay legible.
-      const widen = mode === 'stem' ? clamp((Math.max(ms.earTop, ms.nodeS[4]) + 4) / 6, 1, 4) : 1;
+      const widen = mode === 'stem' ? clamp((Math.max(ms.earTop, ms.node4) + 4) / 6, 1, 4) : 1;
       state.widen = widen;
       plantMesh.group.scale.set(widen, 1, widen);
-      earMesh.group.scale.set(widen, 1, widen);
+      // A spreading panicle (oats) is not widened: it would splay out flat.
+      if (earMesh.type === 'panicle') earMesh.group.scale.set(1, 1, 1);
+      else earMesh.group.scale.set(widen, 1, widen);
       plantMesh.group.updateMatrixWorld(true);
       for (const [k, v] of Object.entries(plantMesh.anchors)) {
         if (v && v.isVector3) { v.x *= widen; v.z *= widen; }
@@ -62,7 +68,7 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
     const items = [];
     const A = plantMesh.anchors;
     const E = earMesh.anchors;
-    const ord = ['Base', '1st', '2nd', '3rd', '4th'];
+    const ord = ['Base', '1st', '2nd', '3rd', '4th', '5th', '6th'];
     let goal;
 
     if (mode === 'plant') {
@@ -91,7 +97,7 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
     } else if (mode === 'stem') {
       const nodes = A.nodes;
       let lastShown = 0;
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= ms.ints.length; i++) {
         const len = ms.ints[i - 1];
         const need = i === 1 ? 1 : 2;
         const prevOk = i === 1 || ms.ints.slice(0, i - 1).every((x, j) => x >= (j === 0 ? 1 : 2));
@@ -103,7 +109,7 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
         items.push({ kind: 'label', p: nodes[i], text: ok ? `${ord[i]} node` : `Node ${i}`, tone: ok ? 'ok' : 'muted', side: 'left', dx: 60 });
       }
       items.push({ kind: 'label', p: nodes[0], text: 'Base node', tone: 'muted', side: 'left', dx: 60 });
-      if (ms.earLen > 0.1) items.push({ kind: 'label', p: A.earMid, text: `Developing ear · ${ms.earLen.toFixed(1)} cm`, tone: 'accent', side: 'right', dx: 90 });
+      if (ms.earLen > 0.1) items.push({ kind: 'label', p: A.earMid, text: `Developing ${ear} · ${ms.earLen.toFixed(1)} cm`, tone: 'accent', side: 'right', dx: 90 });
       items.push({ kind: 'hline', p: new THREE.Vector3(0, 0, 0), text: 'Soil surface', half: 90 });
       rows.push(['Detectable nodes', `${m.detectable}`, m.detectable > 0 ? 'ok' : '']);
       rows.push(['Internodes (cm)', ms.ints.map((x) => x.toFixed(1)).join(' · ')]);
@@ -138,13 +144,13 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
       items.push({ kind: 'label', p, text: 'Flag leaf ligule', side: 'left', dx: 70 });
       const emerged = m.earEmerged;
       if (emerged <= 0.02) {
-        items.push({ kind: 'label', p: A.earMid, text: m.bootSwelling > 1.25 ? 'Ear inside swollen flag leaf sheath (boot)' : 'Ear inside flag leaf sheath', tone: 'accent', side: 'right', dx: 80 });
-        rows.push(['Ear', 'enclosed in flag leaf sheath']);
-        rows.push(['Ear tip below flag ligule', `${m.earTipBelowLigule.toFixed(1)} cm`]);
+        items.push({ kind: 'label', p: A.earMid, text: m.bootSwelling > 1.25 ? `${Ear} inside swollen flag leaf sheath (boot)` : `${Ear} inside flag leaf sheath`, tone: 'accent', side: 'right', dx: 80 });
+        rows.push([Ear, 'enclosed in flag leaf sheath']);
+        rows.push([`${Ear} tip below flag ligule`, `${m.earTipBelowLigule.toFixed(1)} cm`]);
         rows.push(['Boot swelling', m.bootSwelling < 1.2 ? 'none' : m.bootSwelling < 1.7 ? 'slight' : 'obvious']);
       } else {
         items.push({ kind: 'dim', p0: p, p1: E.top || A.earTop, text: `${Math.round(emerged * 100)}% emerged`, tone: emerged >= 1 ? 'ok' : '', offset: 50 });
-        rows.push(['Ear emerged above flag ligule', `${Math.round(emerged * 100)}%`, emerged >= 1 ? 'ok' : '']);
+        rows.push([`${Ear} emerged above flag ligule`, `${Math.round(emerged * 100)}%`, emerged >= 1 ? 'ok' : '']);
       }
       // Awned crops (barley): awns show above the ligule before the ear (GS49).
       const awnUp = m.awnTipAboveLigule;
@@ -171,6 +177,13 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
         const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
         goal = { ...goal, target: c, height: sz.y * 1.15, width: Math.max(8, Math.max(sz.x, sz.z) * 1.15) };
       }
+      if (E.box) {
+        // Panicles (oats): frame the ligule and the whole spreading panicle.
+        const box = E.box.clone().expandByPoint(p);
+        box.min.y = Math.min(box.min.y, lo); box.max.y += 1;
+        const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+        goal = { ...goal, target: c, height: sz.y * 1.15, width: Math.max(8, Math.max(sz.x, sz.z) * 1.15) };
+      }
     } else if (mode === 'grain') {
       const g = plant.K.grain;
       const gs = grainStateText(g);
@@ -181,7 +194,7 @@ export function createCerealView({ crop, model, M, scene, soil, state }) {
       items.push({ kind: 'dim', p0: G.scale0, p1: G.scale1, text: '5 mm', offset: 0 });
       rows.push(['Grain', gs.title]);
       if (gs.test) rows.push(['Test', gs.test]);
-      rows.push(['Ear colour', plant.K.ripe < 0.2 ? 'green' : plant.K.ripe < 0.6 ? 'turning' : 'golden']);
+      rows.push([`${Ear} colour`, plant.K.ripe < 0.2 ? 'green' : plant.K.ripe < 0.6 ? 'turning' : crop.ui.ripeColour || 'golden']);
       goal = { target: new THREE.Vector3(0, 0, 0), height: 1.4, width: 2.9, dir: new THREE.Vector3(0, 0.2, 1) };
     }
     return { rows, items, goal };

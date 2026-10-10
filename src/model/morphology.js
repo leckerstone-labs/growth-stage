@@ -15,10 +15,12 @@
 // (world y = 0). Early on the main shoot's base is at the seed; the sub-crown
 // internode then lifts it until the crown settles 1.2 cm below the surface.
 //
-// Shared botanical structure (main shoot with N leaves):
-//   - The lowest N-5 leaves attach at crown nodes that never elongate.
-//   - The next leaf attaches at the base node, the top four at nodes 1–4.
-//   - Five internodes elongate: i1..i4 and the peduncle (under the ear).
+// Shared botanical structure (main shoot with N leaves, NI = MAIN.internodes
+// elongating internodes below the peduncle: 4 for wheat and barley, 5 for
+// oats):
+//   - The lowest N-NI-1 leaves attach at crown nodes that never elongate.
+//   - The next leaf attaches at the base node, the top NI at nodes 1–NI.
+//   - NI+1 internodes elongate: i1..iNI and the peduncle (under the ear).
 //   - Leaves are counted down from the top in the UI: flag leaf, leaf 2…
 //   - Each blade emerges from the sheath of the leaf below; its ligule
 //     becomes visible when it is fully emerged.
@@ -31,7 +33,6 @@ export const CROWN_DEPTH = 1.2; // cm below soil, once the crown has formed
 export const SEED_DEPTH = 3.2; // drilling depth (centre of the seed), cm
 
 const BASE_NODE_S = 0.2; // base node sits just above the crown
-const CULM_LEAVES = 5; // leaves attached to base node + nodes 1–4
 
 // Before stem extension the shoot axis inside the pseudostem is only the
 // crown and growing point — under 1 mm across.
@@ -53,9 +54,23 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
   const STAGES = crop.stages;
   const { MAIN, ERECT_ANGLE, earProfile, EAR } = crop.params;
   const keyframes = buildKeyframes(STAGES, crop.rows, monotoneSpline);
+  // Elongating internodes below the peduncle (keyframe channels i1..iNI),
+  // and the leaves on the extended stem: base node + nodes 1–NI.
+  const NI = MAIN.internodes ?? 4;
+  const CULM_LEAVES = NI + 1;
+  const INT_KEYS = Array.from({ length: NI }, (_, m) => `i${m + 1}`);
 
-  // Timeline position of a stage, so model timings follow the stage list.
-  const tAt = (code) => STAGES.find((s) => s.code === code).t;
+  // Timeline position of a stage, so model timings follow the stage list. A
+  // code the crop doesn't use as a checkpoint (e.g. GS24 for spring oats,
+  // which stop at two tillers) falls between its neighbours by code.
+  const tAt = (code) => {
+    const i = STAGES.findIndex((s) => s.code >= code);
+    if (i < 0) return STAGES[STAGES.length - 1].t;
+    const b = STAGES[i];
+    if (b.code === code || i === 0) return b.t;
+    const a = STAGES[i - 1];
+    return lerp(a.t, b.t, (code - a.code) / (b.code - a.code));
+  };
   const between = (a, b, f) => lerp(tAt(a), tAt(b), f);
   const SHOOTS = crop.params.shoots(tAt, between);
   const wallOf = (mi) => lerp(0.013, SHEATH_WALL, mi / (MAIN.N - 1));
@@ -119,10 +134,11 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
     const dir = [Math.sin(lean) * Math.cos(az), Math.cos(lean), Math.sin(lean) * Math.sin(az)];
 
     // ---- Nodes and internodes -----------------------------------------------
-    const ints = [K.i1, K.i2, K.i3, K.i4].map((x) => x * sc);
+    const ints = INT_KEYS.map((c) => K[c] * sc);
     const nodeS = [BASE_NODE_S];
-    for (let m = 0; m < 4; m++) nodeS.push(nodeS[m] + ints[m]);
-    const node4 = nodeS[4];
+    for (let m = 0; m < NI; m++) nodeS.push(nodeS[m] + ints[m]);
+    // The node under the peduncle (node 4 in wheat and barley, 5 in oats).
+    const node4 = nodeS[NI];
     const E = Math.max(0.04, K.earL * sc * (k ? 0.96 : 1));
 
     // Stem radius grows with development: each internode reaches its final
@@ -138,7 +154,7 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
     for (let n = 1; n <= N; n++) {
       const mi = Math.min(MAIN.N - 1, n - 1 + (k ? k + 2 : 0)); // matching main-shoot leaf
       const top = N - n + 1; // 1 = flag leaf
-      const m = n - (N - CULM_LEAVES + 1); // node index: <0 crown, 0 base, 1–4
+      const m = n - (N - CULM_LEAVES + 1); // node index: <0 crown, 0 base, 1–NI
       const sNode = m < 0 ? 0.02 * n : nodeS[m];
       const e = clamp(H - (n - 1));
       // Leaves beyond the youngest primordium don't exist yet.
@@ -183,7 +199,9 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
         // emerging (ligule about to appear).
         curl: (1 - smoothstep(0.72, 1, e)) + sen * 0.45,
         tilt, droop,
-        twist: (top === 1 ? 0.9 : 0.35 + h('tw', k, n) * 0.7) * (B / 22) * (1 + sen) * (lv ? lv.twist : 1),
+        // MAIN.twist: -1 twists the other way (oats: anticlockwise, where
+        // wheat and barley twist clockwise).
+        twist: (top === 1 ? 0.9 : 0.35 + h('tw', k, n) * 0.7) * (B / 22) * (1 + sen) * (lv ? lv.twist : 1) * (MAIN.twist ?? 1),
         sway: (h('sw', k, n) - 0.5) * 0.5,
         az: (k ? az + Math.PI / 2 + lv.az : 0) + mainLeafAzimuth(n),
         sen, decay,
@@ -209,15 +227,19 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
     const awnLen = (K.awnL ?? 0) * sc;
     // Ripe ears of some crops (barley) hang over: the shoot axis bends through
     // the top of the peduncle (render/plant-mesh.js makeAxis).
-    const neck = EAR.neck ? { s0: earBase - 6, s1: earBase + 0.5, angle: EAR.neck * DEG * smoothstep(0.15, 0.9, K.ripe) } : null;
+    // EAR.neckSpan [from, to] (cm from the ear base, or 'top' for the ear
+    // tip) is where the bend happens: just under the ear for barley; along
+    // the whole rachis for an oat panicle, so it arches over.
+    const span = EAR.neckSpan ?? [-6, 0.5];
+    const neck = EAR.neck ? { s0: earBase + span[0], s1: span[1] === 'top' ? earTop : earBase + span[1], angle: EAR.neck * DEG * smoothstep(0.15, 0.9, K.ripe) } : null;
 
     // ---- Stem radius --------------------------------------------------------
     // Piecewise-linear between internode midpoints, so thickness changes
     // smoothly along the stem.
     const knots = [[0, thick(ints[0], MAIN.stemR[0])]];
-    for (let m = 0; m < 4; m++) knots.push([(nodeS[m] + nodeS[m + 1]) / 2, thick(ints[m], MAIN.stemR[m])]);
-    knots.push([node4 + ped / 2, thick(ped, MAIN.stemR[4])]);
-    knots.push([earBase, thick(ped, MAIN.stemR[4])]);
+    for (let m = 0; m < NI; m++) knots.push([(nodeS[m] + nodeS[m + 1]) / 2, thick(ints[m], MAIN.stemR[m])]);
+    knots.push([node4 + ped / 2, thick(ped, MAIN.stemR[NI])]);
+    knots.push([earBase, thick(ped, MAIN.stemR[NI])]);
     const stemRadius = (s) => {
       if (s <= knots[0][0]) return knots[0][1];
       for (let i = 1; i < knots.length; i++) {
@@ -333,7 +355,7 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
     let detectable = 0;
     if (ms.ints[0] >= 1) {
       detectable = 1;
-      for (let i = 1; i < 4 && ms.ints[i] >= 2; i++) detectable++;
+      for (let i = 1; i < NI && ms.ints[i] >= 2; i++) detectable++;
     }
     const emerged = clamp((ms.earTop - flag.collarS) / ms.earLen, 0, 1);
     return {
@@ -350,8 +372,8 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
       earLen: ms.earLen,
       leafEmerge: (top) => leaves[leaves.length - top]?.emerge ?? 0,
       // Widest point of the flag-leaf sheath relative to its width around
-      // internode 4 (only stem inside).
-      bootSwelling: flag.sheath ? Math.max(...flag.sheath.map((p) => p.r)) / (ms.stemRadius((ms.nodeS[3] + ms.node4) / 2) + SHEATH_WALL) : 1,
+      // the internode below the top node (only stem inside).
+      bootSwelling: flag.sheath ? Math.max(...flag.sheath.map((p) => p.r)) / (ms.stemRadius((ms.nodeS[NI - 1] + ms.node4) / 2) + SHEATH_WALL) : 1,
       // Diameters in mm: pseudostem just above the soil, and the stem itself
       // halfway up internode 2.
       pseudostemDiam: 20 * Math.max(ms.stemRadius(CROWN_DEPTH + 0.3),
