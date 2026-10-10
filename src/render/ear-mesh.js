@@ -79,7 +79,7 @@ const MAX_EARS = 3;
 const SPIKELETS = 21;
 const FLORETS = 3;
 // Two-row barley: rachis nodes per main-shoot ear (≈ grains per ear; AHDB
-// benchmark 24).
+// benchmark 24 for winter barley). A crop can set EAR.nodes instead.
 const BARLEY_NODES = 24;
 // Barley awns: segments per awn and their widths (× the 0.1 mm radius of
 // the segment geometry): ~0.6 mm across at the base, tapering to the tip.
@@ -369,7 +369,7 @@ export class EarMesh {
 
     // ---- Lay out rachis nodes in ear-local units (before fitting) ---------
     // Alternate nodes face opposite ways: these are the two rows of grain.
-    const nN = BARLEY_NODES - (sh.k ? 1 + sh.k : 0);
+    const nN = (this.model.crop.params.EAR.nodes ?? BARLEY_NODES) - (sh.k ? 1 + sh.k : 0);
     const nodes = [];
     for (let j = 0; j < nN; j++) {
       const u = (j + 0.5) / nN;

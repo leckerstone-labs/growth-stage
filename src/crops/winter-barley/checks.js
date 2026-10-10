@@ -3,10 +3,26 @@
 // visible before the ear (GS49), a small flag leaf, and AHDB height
 // benchmarks.
 //
+// The rules are shared with spring barley (src/crops/spring-barley/checks.js),
+// which passes its own benchmark ranges to barleyChecks().
+//
 // Helpers: { at(code) → measureMain(), plantAt(code) → computePlant(),
 // expect(code, ok, msg), SEED_DEPTH }
 
-export function checks({ at, plantAt, expect, SEED_DEPTH }) {
+// Benchmark ranges for winter barley. Height: AHDB 89–98 cm final with PGR,
+// nearly half of it at GS39. Thicknesses (mm): typical field values, to be
+// confirmed.
+export const WINTER = {
+  finalHeight: [82, 98],
+  heightAt39: [0.4, 0.52],
+  heightNote: 'AHDB: nearly half',
+  pseudostem: { 13: [1.5, 2.5], 21: [2, 3.5], 30: [5, 8] },
+  stem39: [3, 5],
+};
+
+export const checks = (helpers) => barleyChecks(helpers, WINTER);
+
+export function barleyChecks({ at, plantAt, expect, SEED_DEPTH }, B) {
   // Germination and leaf production.
   let p = plantAt(5);
   expect(5, p.main.seedling.coleoLen === 0 && p.main.seedling.rootDepth > 0, 'radicle only, no coleoptile');
@@ -71,20 +87,19 @@ export function checks({ at, plantAt, expect, SEED_DEPTH }) {
   m = at(59);
   expect(59, m.earEmerged >= 1, 'ear fully emerged');
 
-  // Height (AHDB: 89–98 cm final with PGR; nearly half of it at GS39).
+  // Height.
   const final = at(92).height;
-  expect(92, final >= 82 && final <= 98, `final height 82–98 cm (${final.toFixed(0)})`);
+  const [h0, h1] = B.finalHeight, [r0, r1] = B.heightAt39;
+  expect(92, final >= h0 && final <= h1, `final height ${h0}–${h1} cm (${final.toFixed(0)})`);
   const h39 = at(39).height / final;
-  expect(39, h39 >= 0.4 && h39 <= 0.52, `nearly half final height at GS39 (${(h39 * 100).toFixed(0)}%)`);
+  expect(39, h39 >= r0 && h39 <= r1, `${B.heightNote} of final height at GS39 (${(h39 * 100).toFixed(0)}%)`);
 
-  // Thickness targets (mm) — typical field values, to be confirmed.
+  // Thickness targets (mm).
   const mm = (x) => x.toFixed(1);
-  m = at(13);
-  expect(13, m.pseudostemDiam >= 1.5 && m.pseudostemDiam <= 2.5, `pseudostem 1.5–2.5 mm (${mm(m.pseudostemDiam)})`);
-  m = at(21);
-  expect(21, m.pseudostemDiam >= 2 && m.pseudostemDiam <= 3.5, `pseudostem 2–3.5 mm (${mm(m.pseudostemDiam)})`);
-  m = at(30);
-  expect(30, m.pseudostemDiam >= 5 && m.pseudostemDiam <= 8, `pseudostem 5–8 mm (${mm(m.pseudostemDiam)})`);
+  for (const [code, [lo, hi]] of Object.entries(B.pseudostem)) {
+    m = at(+code);
+    expect(+code, m.pseudostemDiam >= lo && m.pseudostemDiam <= hi, `pseudostem ${lo}–${hi} mm (${mm(m.pseudostemDiam)})`);
+  }
   m = at(39);
-  expect(39, m.stemDiam >= 3 && m.stemDiam <= 5, `stem 3–5 mm (${mm(m.stemDiam)})`);
+  expect(39, m.stemDiam >= B.stem39[0] && m.stemDiam <= B.stem39[1], `stem ${B.stem39[0]}–${B.stem39[1]} mm (${mm(m.stemDiam)})`);
 }

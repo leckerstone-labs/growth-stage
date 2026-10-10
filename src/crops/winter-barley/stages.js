@@ -50,6 +50,9 @@ export const PHASES = [
 export const CROP = {
   id: 'winter_barley',
   name: 'Winter barley',
+  species: 'barley',
+  speciesName: 'Barley',
+  variant: 'winter',
   stageSystem: 'Zadoks (AHDB)',
 };
 

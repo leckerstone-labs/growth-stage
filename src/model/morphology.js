@@ -100,7 +100,10 @@ export function createModel(crop, { seed = DEFAULT_SEED } = {}) {
     }
     ts = Math.max(0, ts);
     const K = keyframes(ts);
-    const H = K.vH - (k ? k + 2 : 0); // this shoot's own leaf clock
+    // This shoot's own leaf clock. Tiller k appears when the main shoot's
+    // clock passes k + 2 (with leaf k + 3), unless its def sets `appear`:
+    // spring cereals with few leaves tiller sooner relative to leaf number.
+    const H = K.vH - (k ? def.appear ?? k + 2 : 0);
     if (k && H <= 0) return null; // tiller not yet emerged
 
     const sc = def.scale * (V ? V.scale : 1);

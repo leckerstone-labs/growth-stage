@@ -50,6 +50,9 @@ export const PHASES = [
 export const CROP = {
   id: 'winter_wheat',
   name: 'Winter wheat',
+  species: 'wheat',
+  speciesName: 'Wheat',
+  variant: 'winter',
   stageSystem: 'Zadoks (AHDB)',
 };
 

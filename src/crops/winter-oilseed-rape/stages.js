@@ -55,6 +55,9 @@ export const PHASES = [
 export const CROP = {
   id: 'winter_oilseed_rape',
   name: 'Winter oilseed rape',
+  species: 'oilseed_rape',
+  speciesName: 'Oilseed rape',
+  variant: 'winter',
   stageSystem: 'BBCH (AHDB)',
   family: 'brassica',
 };

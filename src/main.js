@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from '../vendor/OrbitControls.js';
-import { CROPS, getCrop } from './crops/index.js';
+import { SPECIES, getCrop, cropForSpecies } from './crops/index.js';
 import { createCropModel } from './model/index.js';
 import { createCropView } from './views/index.js';
 import { clamp, lerp, smoothstep } from './model/interp.js';
@@ -21,15 +21,49 @@ const model = createCropModel(crop, { seed });
 const { computePlant, checkStages, tAt } = model;
 const { stages: STAGES, phases: PHASES, sources: SOURCES, views: INSPECT_VIEWS } = crop;
 
-// Crop picker in the header. Keeps the current stage and view when switching.
+// Crop picker in the header: one entry per species, plus a Winter/Spring
+// toggle when the species has more than one variant (src/crops/index.js).
+// Switching reloads with the new crop id, keeping the stage (if that crop has
+// it), the view and the seed.
 document.title = `Growth Stage — ${crop.name}`;
-const cropSelect = $('crop');
-for (const c of CROPS) cropSelect.add(new Option(c.name, c.id, false, c === crop));
-cropSelect.addEventListener('change', () => {
-  const q = new URLSearchParams({ crop: cropSelect.value, gs: stageAt(state.t).cur.code, view: state.mode });
+function switchCrop(id) {
+  if (id === crop.id) return;
+  const q = new URLSearchParams({ crop: id, gs: stageAt(state.t).cur.code, view: state.mode });
   if (seed !== undefined) q.set('seed', seed);
   location.search = q.toString();
-});
+}
+const cropSelect = $('crop');
+for (const s of SPECIES) {
+  // A species with a single variant keeps its full name (e.g. "Winter wheat").
+  const label = s.variants.length > 1 ? s.speciesName : s.variants[0].name;
+  cropSelect.add(new Option(label, s.species, false, s.species === crop.species));
+}
+cropSelect.addEventListener('change', () => switchCrop(cropForSpecies(cropSelect.value, crop).id));
+// A select is as wide as its longest option; fit it to the chosen one so the
+// Winter/Spring toggle sits right beside it (and fits on a phone).
+function fitSelect() {
+  const probe = document.createElement('span');
+  probe.className = 'select-probe';
+  probe.textContent = cropSelect.selectedOptions[0]?.textContent ?? '';
+  cropSelect.after(probe);
+  cropSelect.style.width = `${Math.ceil(probe.getBoundingClientRect().width) + 22}px`;
+  probe.remove();
+}
+fitSelect();
+document.fonts?.ready.then(fitSelect);
+const variants = SPECIES.find((s) => s.species === crop.species).variants;
+if (variants.length > 1) {
+  const group = $('season');
+  for (const c of variants) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = c.variant[0].toUpperCase() + c.variant.slice(1);
+    b.setAttribute('aria-pressed', String(c === crop));
+    b.addEventListener('click', () => switchCrop(c.id));
+    group.append(b);
+  }
+  group.hidden = false;
+}
 
 // ---------------------------------------------------------------------------
 // Renderer and scene

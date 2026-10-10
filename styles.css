@@ -56,6 +56,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
   margin-left: 6px; pointer-events: auto; border: 0; background: transparent; padding: 2px 0; cursor: pointer;
   font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--accent);
 }
+/* Measures the chosen crop name (main.js fitSelect). */
+.select-probe { position: absolute; visibility: hidden; white-space: pre; }
+/* Winter/Spring toggle beside the crop picker (species with two variants). */
+.season {
+  display: inline-flex; vertical-align: middle; margin-left: 8px; padding: 2px; gap: 2px; pointer-events: auto;
+  border-radius: 999px; border: 1px solid var(--line); background: rgba(250, 248, 242, 0.75);
+}
+.season[hidden] { display: none; }
+.season button {
+  border: 0; background: transparent; padding: 3px 9px; border-radius: 999px;
+  font: inherit; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2);
+}
+.season button[aria-pressed='true'] { background: var(--accent); color: #fff; }
 .stage { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; }
 .code { font-family: var(--serif); font-size: 52px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: lining-nums tabular-nums; }
 .title { font-family: var(--serif); font-size: 21px; line-height: 1.15; font-weight: 600; max-width: 30ch; }
@@ -204,6 +217,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   :root { --tl-w: 58px; --edge: 10px; --bar-h: 46px; }
   .top { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
   .brand select { margin-left: 4px; }
+  .season { margin-left: 4px; }
+  .season button { padding: 4px 9px; }
   /* Fixed-height header, so the panels below (and the 3D frame) don't move
      as the stage changes: title at most two lines beside the code, subtitle
      on one full-width line underneath. */
