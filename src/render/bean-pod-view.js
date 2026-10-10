@@ -134,6 +134,8 @@ export class BeanPodView {
     s = clamp(s, 0, 5);
     const c = this.colour(s);
     this.podMat.color.setRGB(...c.pod);
+    // Green pods are downy (matt); ripe black pods leathery with a slight sheen.
+    this.podMat.roughness = lerp(0.82, 0.52, smoothstep(4, 5, s));
     this.liningMat.color.setRGB(...mix(this.C.lining, this.C.liningDry, smoothstep(3.5, 5, s)));
     // Seed colours: coat, with the hilum along the top edge.
     const pos = this.seedGeo.attributes.position, col = this.seedGeo.attributes.color;

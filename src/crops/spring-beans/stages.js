@@ -218,7 +218,7 @@ export const TEXT = {
   79: {
     title: 'Nearly all pods at final length',
     description:
-      'Nearly all pods are full length and swinging out and down under the weight of the seed. The lowest leaves are yellowing and turning black.',
+      'Nearly all pods are full length and swinging out and down under the weight of the seed. The lowest leaves are yellowing, browning and falling.',
     check: 'Pods all the way up the stem are full length.',
     inspect: 'pods',
     sources: B,
@@ -250,7 +250,7 @@ export const TEXT = {
   85: {
     title: '50% of pods ripe and dark',
     description:
-      'Half the pods are black. The leaves are dying from the bottom up and turn black too.',
+      'Half the pods are black. The leaves are dying from the bottom up: yellow, then brown to black, curling as they dry; most of them fall.',
     check: 'Half the pods on the main stem are black; open one: buff seeds with a black hilum, dry and hard.',
     inspect: 'pods',
     sources: B,
@@ -266,7 +266,7 @@ export const TEXT = {
   95: {
     title: '50% of stems brown or black',
     description:
-      'The stems are darkening from the base up; about half the stem is brown to black. Most leaves have died and many have fallen.',
+      'The stems are darkening from the base up; about half the stem has turned brown to dark grey-brown. Most leaves have died and fallen; they lie black on the ground.',
     check: 'Estimate the share of the stems that has turned brown or black.',
     inspect: 'plant',
     sources: B,
@@ -274,8 +274,8 @@ export const TEXT = {
   97: {
     title: 'Plant dead and dry',
     description:
-      'The whole plant is black and dry, with the dead upper leaves still hanging on. Harvest (GS99) follows.',
-    check: 'Stems and pods are black and brittle; seeds are hard and loose in the pods.',
+      'The whole plant is dead and dry: pods black, stems dark brown to grey-black, a few shrivelled upper leaves still hanging on. Harvest (GS99) follows.',
+    check: 'Pods are black and brittle, stems dark and dry; seeds are hard and loose in the pods.',
     inspect: 'plant',
     sources: B,
   },

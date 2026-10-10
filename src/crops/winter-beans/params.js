@@ -21,7 +21,7 @@ export const SCALE_LEAVES = spring.SCALE_LEAVES;
 export const LEAVES = {
   leaflets: [2, 2, 2, 3, 4, 4, 4, 5, 5, 6, 6, 6, 6, 6, 5, 4, 4],
   len: [3.6, 4.2, 4.8, 5.8, 6.6, 7.2, 7.7, 8.0, 8.2, 8.2, 7.9, 7.7, 7.3, 7.0, 6.4, 5.5, 4.8],
-  width: [0.62, 0.6, 0.58, 0.56, 0.54, 0.52, 0.5, 0.5, 0.49, 0.48, 0.47, 0.46, 0.45, 0.44, 0.43, 0.42, 0.42],
+  width: [0.68, 0.67, 0.65, 0.63, 0.61, 0.59, 0.58, 0.57, 0.56, 0.55, 0.54, 0.53, 0.52, 0.51, 0.5, 0.5, 0.5],
   petiole: [1.4, 1.8, 2.2, 2.6, 3.0, 3.2, 3.5, 3.8, 3.8, 3.8, 3.6, 3.5, 3.4, 3.1, 2.9, 2.6, 2.3],
   spacing: 1.95,
   stipule: 0.9,
@@ -47,8 +47,8 @@ export const PODS = { perNode: [2, 2, 2, 1, 1, 1], len: [7.0, 5.8], r: 0.78, bea
 //   from vertical at the base, degrees; scale: size relative to main stem
 // Each shoot also gets a little seeded variation (model/legume.js).
 export const BRANCHES = [
-  { node: 0, start: 3.3, rate: 1.3, leaves: 14, offset: 2, first: 4, nodes: 9, perNode: [2, 1, 1, 1], lag: 1.0, az: -0.4, angle: 30, scale: 0.94 },
-  { node: 1, start: 4.3, rate: 1.3, leaves: 13, offset: 2, first: 4, nodes: 8, perNode: [1, 1, 1, 1], lag: 1.6, az: 2.7, angle: 27, scale: 0.9 },
+  { node: 0, start: 3.3, rate: 1.3, leaves: 14, offset: 2, first: 4, nodes: 9, perNode: [2, 1, 1, 1], lag: 1.0, az: -0.4, angle: 24, scale: 0.94 },
+  { node: 1, start: 4.3, rate: 1.3, leaves: 13, offset: 2, first: 4, nodes: 8, perNode: [1, 1, 1, 1], lag: 1.6, az: 2.7, angle: 21, scale: 0.9 },
 ];
 
 export const SEED_SPREAD = spring.SEED_SPREAD;
