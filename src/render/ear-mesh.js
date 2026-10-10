@@ -78,6 +78,8 @@ export function boatGeometry(len, width, depth, { keel = 0.25, beak = 0 } = {}) 
 }
 
 const MAX_EARS = 3;
+// Wheat: spikelets per main-shoot ear. A crop can set EAR.spikelets (at
+// most this many) for a smaller ear.
 const SPIKELETS = 21;
 const FLORETS = 3;
 // Two-row barley: rachis nodes per main-shoot ear (≈ grains per ear; AHDB
@@ -240,7 +242,8 @@ export class EarMesh {
     const earCol = earColour(ripe);
 
     // ---- Lay out spikelets in ear-local units (before fitting) ------------
-    const nS = sh.k ? SPIKELETS - 1 - sh.k : SPIKELETS;
+    const nMain = Math.min(SPIKELETS, this.model.crop.params.EAR.spikelets ?? SPIKELETS);
+    const nS = sh.k ? nMain - 1 - sh.k : nMain;
     const sy = Math.max(ly, 0.3);
     const spikes = [];
     for (let j = 0; j < nS; j++) {

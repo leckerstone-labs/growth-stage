@@ -12,6 +12,7 @@
 // species has more than one variant. The order below is the order shown, and
 // a species' first variant listed is the one picked when switching to it.
 import winterWheat from './winter-wheat/index.js';
+import springWheat from './spring-wheat/index.js';
 import winterBarley from './winter-barley/index.js';
 import springBarley from './spring-barley/index.js';
 import springOats from './spring-oats/index.js';
@@ -21,7 +22,7 @@ import springOilseedRape from './spring-oilseed-rape/index.js';
 import winterBeans from './winter-beans/index.js';
 import springBeans from './spring-beans/index.js';
 
-export const CROPS = [winterWheat, winterBarley, springBarley, springOats, winterOats, winterOilseedRape, springOilseedRape, winterBeans, springBeans];
+export const CROPS = [winterWheat, springWheat, winterBarley, springBarley, springOats, winterOats, winterOilseedRape, springOilseedRape, winterBeans, springBeans];
 
 // Unknown or missing ids fall back to the first crop.
 export const getCrop = (id) => CROPS.find((c) => c.id === id) || CROPS[0];
