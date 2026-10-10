@@ -61,6 +61,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Ear emergence is measured from the flag-leaf ligule (GS51 tip visible, GS55 half, GS59 base clear).
 - Flowering starts mid-ear and spreads up and down; spent anthers fade and some stay trapped.
 - Senescence runs bottom-up (and tip-first within a leaf); two late tillers die during stem extension.
+- Tillers (and oilseed rape side branches) are not copies of each other: each gets a little seeded variation in direction, lean, curvature, size, timing and leaf shape (`src/model/random.js`). It is fixed per plant, so every reload and frame shows the same plant; `?seed=<number>` draws a different one. The main shoot and main raceme are never varied, because `npm run check` measures them.
 
 ### Deliberate exaggerations (flagged in the UI where relevant)
 
@@ -88,8 +89,8 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Overwinter rosette (GS30) with a thickening root collar and taproot. Stem extension in spring, with clasping, stalkless upper stem leaves.
 - Buds hidden by the youngest leaves (GS50), visible from above (GS51), raised clear (GS53), separate on the main raceme then side racemes (GS55/57), yellow bud (GS59).
 - Flowers open from the bottom of each raceme upwards. Petals fall and pods lengthen behind the flowering front. BBCH percentages (flowers open, pods at final size, pods ripe) are counted from the model's flower positions.
-- Seeds ripen bottom-up: the GS83 seed colours by thirds match AHDB's swathing guide. About 195 pods per plant (AHDB: 6,000–8,000 pods/m² at 25–40 plants/m²); final height about 127 cm (AHDB: 100–160 cm).
-- Six side racemes from the upper stem-leaf axils, each lagging the main raceme.
+- Seeds ripen bottom-up: the GS83 seed colours by thirds match AHDB's swathing guide. About 225 pods per plant (AHDB: 6,000–8,000 pods/m² at 25–40 plants/m²); final height about 127 cm (AHDB: 100–160 cm).
+- Eight side racemes, one from each stem-leaf axil (smaller and later lower down), each lagging the main raceme.
 
 ## Installable app (PWA)
 

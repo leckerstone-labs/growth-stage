@@ -173,9 +173,9 @@ export class EarMesh {
     // Ear orientation: fixed face direction per shoot. Ripe ears bow over
     // (EAR.nod degrees) and tiller ears lean out slightly — only once they're
     // free of the sheath.
-    const twist = new THREE.Quaternion().setFromAxisAngle(Y, sh.k ? hash('earAz', sh.k) * Math.PI : 0);
+    const twist = new THREE.Quaternion().setFromAxisAngle(Y, sh.earTwist ?? (sh.k ? hash('earAz', sh.k) * Math.PI : 0));
     const base = axis.at(sh.earBase, {});
-    const nod = (sh.K.ripe * this.model.crop.params.EAR.nod + (sh.k ? 4 : 0)) * DEG * emerged;
+    const nod = (sh.K.ripe * this.model.crop.params.EAR.nod + (sh.earNod ?? (sh.k ? 4 : 0))) * DEG * emerged;
     const nodAxis = X.clone().applyQuaternion(base.q.clone().multiply(twist));
     const nodQ = new THREE.Quaternion().setFromAxisAngle(nodAxis, nod);
     const frameAt = (y) => {

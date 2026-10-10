@@ -102,11 +102,11 @@ export function makeAxis(sh, sMax) {
   const step = 0.4;
   const n = Math.ceil(sMax / step) + 2;
   const pts = [], tans = [], quats = [];
-  const leanTop = sh.lean * 0.4;
+  const leanTop = sh.lean * (sh.leanTop ?? 0.4);
   const p = new THREE.Vector3(...sh.base);
   for (let i = 0; i < n; i++) {
     const s = i * step;
-    let phi = leanTop + (sh.lean - leanTop) * Math.exp(-s / 6);
+    let phi = leanTop + (sh.lean - leanTop) * Math.exp(-s / (sh.bend ?? 6));
     if (sh.neck) phi += sh.neck.angle * smoothstep(sh.neck.s0, sh.neck.s1, s);
     const t = new THREE.Vector3(Math.sin(phi) * Math.cos(sh.az), Math.cos(phi), Math.sin(phi) * Math.sin(sh.az));
     pts.push(p.clone());
