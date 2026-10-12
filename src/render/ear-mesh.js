@@ -182,7 +182,7 @@ export class EarMesh {
     // free of the sheath.
     const twist = new THREE.Quaternion().setFromAxisAngle(Y, sh.earTwist ?? (sh.k ? hash('earAz', sh.k) * Math.PI : 0));
     const base = axis.at(sh.earBase, {});
-    const nod = (sh.K.ripe * this.model.crop.params.EAR.nod + (sh.earNod ?? (sh.k ? 4 : 0))) * DEG * emerged;
+    const nod = (sh.K.ripe * this.model.crop.params.EAR.nod * (sh.nodF ?? 1) + (sh.earNod ?? (sh.k ? 4 : 0))) * DEG * emerged;
     const nodAxis = X.clone().applyQuaternion(base.q.clone().multiply(twist));
     const nodQ = new THREE.Quaternion().setFromAxisAngle(nodAxis, nod);
     const frameAt = (y) => {
@@ -232,7 +232,7 @@ export class EarMesh {
     const E = sh.earLen;
     if (E < 0.05) return;
     const earProfile = this.model.earProfile;
-    const finalLen = this.model.crop.params.MAIN.earLen * sh.scale * (sh.k ? 0.96 : 1);
+    const finalLen = this.model.crop.params.MAIN.earLen * sh.scale * (sh.k ? 0.96 : 1) * (sh.earF ?? 1);
     const ly = E / finalLen; // ear grows in length…
     const lw = clamp(sh.earW, 0.08, 1) * sh.scale; // …and in width
     const ripe = K.ripe;
@@ -243,7 +243,7 @@ export class EarMesh {
 
     // ---- Lay out spikelets in ear-local units (before fitting) ------------
     const nMain = Math.min(SPIKELETS, this.model.crop.params.EAR.spikelets ?? SPIKELETS);
-    const nS = sh.k ? nMain - 1 - sh.k : nMain;
+    const nS = sh.k ? clamp(nMain - 1 - sh.k + (sh.spikeletAdj ?? 0), 5, nMain - 1) : nMain;
     const sy = Math.max(ly, 0.3);
     const spikes = [];
     for (let j = 0; j < nS; j++) {
@@ -364,7 +364,7 @@ export class EarMesh {
     const E = sh.earLen;
     if (E < 0.05) return;
     const earProfile = this.model.earProfile;
-    const finalLen = this.model.crop.params.MAIN.earLen * sh.scale * (sh.k ? 0.96 : 1);
+    const finalLen = this.model.crop.params.MAIN.earLen * sh.scale * (sh.k ? 0.96 : 1) * (sh.earF ?? 1);
     const ly = E / finalLen; // ear grows in length…
     const lw = clamp(sh.earW, 0.08, 1) * sh.scale; // …and in width
     const { ripe, fill } = K;
@@ -377,7 +377,8 @@ export class EarMesh {
 
     // ---- Lay out rachis nodes in ear-local units (before fitting) ---------
     // Alternate nodes face opposite ways: these are the two rows of grain.
-    const nN = (this.model.crop.params.EAR.nodes ?? BARLEY_NODES) - (sh.k ? 1 + sh.k : 0);
+    const nMax = this.model.crop.params.EAR.nodes ?? BARLEY_NODES;
+    const nN = sh.k ? clamp(nMax - 1 - sh.k + (sh.spikeletAdj ?? 0), 6, nMax - 1) : nMax;
     const nodes = [];
     for (let j = 0; j < nN; j++) {
       const u = (j + 0.5) / nN;

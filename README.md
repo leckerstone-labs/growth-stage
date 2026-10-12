@@ -65,7 +65,7 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 - Ear emergence is measured from the flag-leaf ligule (GS51 tip visible, GS55 half, GS59 base clear).
 - Flowering starts mid-ear and spreads up and down; spent anthers fade and some stay trapped.
 - Senescence runs bottom-up (and tip-first within a leaf); two late tillers die during stem extension.
-- Tillers (and oilseed rape side branches) are not copies of each other: each gets a little seeded variation in direction, lean, curvature, size, timing and leaf shape (`src/model/random.js`). It is fixed per plant, so every reload and frame shows the same plant; `?seed=<number>` draws a different one. The main shoot and main raceme are never varied, because `npm run check` measures them.
+- Tillers (and oilseed rape side branches) are not copies of each other: each gets a little seeded variation in direction, lean, curvature, size, timing and leaf shape (`src/model/random.js`). Cereal tillers also get a vigour that moves height, ear size and leaf size together, plus their own internode and peduncle lengths (so ears sit at different heights), spikelet count, leaf droop and posture, and ripe-ear nod; the amounts are in `VARIATION_DEFAULTS` in `src/model/morphology.js` and a crop can override them with `params.VARIATION`. It is fixed per plant, so every reload and frame shows the same plant; `?seed=<number>` draws a different one. The main shoot and main raceme are never varied, because `npm run check` measures them.
 
 ### Deliberate exaggerations (flagged in the UI where relevant)
 

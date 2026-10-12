@@ -7,8 +7,10 @@
 // and keep the numbers. The model rebuilds geometry on every timeline change,
 // so the values must be constants of the plant, never of the time.
 //
-// The main shoot (cereals) and main raceme (oilseed rape) are never varied:
-// `npm run check` measures them against the AHDB stage rules.
+// The main shoot (cereals), main raceme (oilseed rape) and main stem (beans)
+// keep every measured length, position, count and timing: `npm run check`
+// measures them against the stage rules. Only their leaves' direction, tilt
+// and droop (and, in beans, leaf size and colour) are varied.
 
 // Default seed: the plant everyone sees unless the URL asks for another
 // (?seed=<number>).

@@ -68,7 +68,7 @@ export function buildPanicle(sh, axis, opts, counts, isMain) {
   const { MAIN, PANICLE: PN } = this.model.crop.params;
   const earProfile = this.model.earProfile;
   const tAt = this.model.tAt;
-  const finalLen = MAIN.earLen * sh.scale * (sh.k ? 0.96 : 1);
+  const finalLen = MAIN.earLen * sh.scale * (sh.k ? 0.96 : 1) * (sh.earF ?? 1);
   const ly = clamp(E / finalLen, 0.02, 1); // the panicle grows in length…
   const lw = clamp(sh.earW, 0.08, 1); // …and its spikelets fill out
   const { ripe, fill } = K;
@@ -119,7 +119,7 @@ export function buildPanicle(sh, axis, opts, counts, isMain) {
   const branches = [];
   for (let w = 0; w < nW; w++) {
     const yW = PN.whorls[w] * E;
-    const nS = Math.max(1, PN.spikelets[w] - (w < 2 ? sh.k : 0));
+    const nS = clamp(PN.spikelets[w] - (w < 2 ? sh.k - (sh.spikeletAdj ?? 0) : 0), 1, PN.spikelets[w]);
     const nB = Math.min(PN.branches[w], nS);
     // Above the ligule the whorl spreads; fully open by flowering.
     const above = sh.earBase + yW - topCollar;
