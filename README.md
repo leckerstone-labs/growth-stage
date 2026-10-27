@@ -25,7 +25,7 @@ Built by [Leckerstone Labs](https://leckerstonelabs.com). MIT licence (see [LICE
 ```sh
 npm run serve        # http://localhost:8642  (python3, caching disabled)
 npm run check        # verifies the model meets the AHDB stage rules at every checkpoint
-npm run build-site   # builds dist/ (what gets published)
+npm run build-site   # builds dist/ (what gets published), with a text guide page per crop
 ```
 
 The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← / → previous/next stage, space play/pause. Drag to rotate, scroll/pinch to zoom.
@@ -157,11 +157,11 @@ The app opens at the crop's final stage (`?gs=<code>` opens another). Keys: ← 
 |---|---|
 | `manifest.webmanifest` | Name, colours, icons; makes the site installable. |
 | `icons/` | `icon.svg` (rounded, also the favicon) and `icon-maskable.svg` (full-bleed, for Android masks and the iOS home screen) are the sources. The PNGs are rendered from them in Chromium with `scripts/render-icons.js` (a Playwright run-code snippet) and committed. `favicon.ico` is made from `icon-512.png` with ImageMagick. |
-| `sw.js` | Service worker. Precaches every shipped file on install, then serves cache-first, so the app works offline. Page loads with any query (`?crop=…`) get the cached page. Old caches are deleted when a new version activates. |
+| `sw.js` | Service worker. Precaches every shipped file on install, then serves cache-first, so the app works offline. Page loads of the app with any query (`?crop=…`) get the cached app page; the text guide pages (`/winter-wheat/`…) get their own. Old caches are deleted when a new version activates. |
 | `src/pwa.js` | Registers the worker, shows the "Update available — Reload" toast, and the "Install app" button (Chrome/Edge/Android) or an "Add to Home Screen" hint (iOS) in the info panel footer. |
 | `og-image.png` | 1200×630 link-preview image (wheat at GS65 with the title). A placeholder made from a screenshot. |
 
-**Versions and updates.** `scripts/build-site.sh` stamps `dist/sw.js` with a version, a hash of every shipped file (names and contents, nothing else), and with the list of files to precache (everything in `dist/`). So `sw.js` changes exactly when what ships changes: a commit that only touches docs or scripts, or rebuilding the same code, gives a byte-identical `sw.js` and no update prompt. Browsers check `sw.js` on each visit (it is served `no-cache`), and the app also checks when it comes back to the foreground and hourly. The new version downloads in the background. The user then sees the toast, and Reload switches to it. If they ignore it, it applies the next time every tab or the installed app is closed and reopened.
+**Versions and updates.** `scripts/build-site.sh` stamps `dist/sw.js` with a version, a hash of every shipped file (names and contents, nothing else), and with the list of files to precache (everything in `dist/` but `robots.txt` and `sitemap.xml`; a guide page is listed as its directory). So `sw.js` changes exactly when what ships changes: a commit that only touches docs or scripts, or rebuilding the same code, gives a byte-identical `sw.js` and no update prompt. Browsers check `sw.js` on each visit (it is served `no-cache`), and the app also checks when it comes back to the foreground and hourly. The new version downloads in the background. The user then sees the toast, and Reload switches to it. If they ignore it, it applies the next time every tab or the installed app is closed and reopened.
 
 **Development.** The worker is not registered on `localhost`/`127.0.0.1`, so `npm run serve` always shows your edits. Open a local page once with `?sw=1` to test it (remembered for that address until you open it with `?sw=0`; turning it off unregisters the worker). Unbuilt, `sw.js` has no version or precache list and simply caches files as they load. To test the real thing, build and serve `dist/` with `?sw=1`.
 
