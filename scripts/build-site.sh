@@ -9,7 +9,7 @@ set -e
 cd "$(dirname "$0")/.."
 rm -rf dist
 mkdir -p dist
-cp -R index.html styles.css guide.css manifest.webmanifest sw.js favicon.ico og-image.png icons src vendor dist/
+cp -R index.html styles.css guide.css robots.txt manifest.webmanifest sw.js favicon.ico og-image.png icons src vendor dist/
 find dist -name '.DS_Store' -delete
 
 # Text guide per crop, sitemap.xml and the guide links in index.html, all from
@@ -34,7 +34,7 @@ files = []
 for root, _, names in os.walk('dist'):
     for n in names:
         p = os.path.relpath(os.path.join(root, n), 'dist')
-        if p in ('sw.js', '_headers', 'index.html', 'sitemap.xml'):
+        if p in ('sw.js', '_headers', 'index.html', 'robots.txt', 'sitemap.xml'):
             continue
         # A page is cached as its directory, "<dir>/" (Cloudflare redirects
         # <dir>/index.html to <dir>/), the way "./" below stands in for the app.

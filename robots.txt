@@ -1,0 +1,16 @@
+# Growth Stage welcomes search engines, and AI assistants that search the web
+# or fetch a page for someone. It does not allow crawling to train AI models.
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Allow: /
+
+# Crawlers that only collect AI training data.
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: CCBot
+User-agent: Bytespider
+User-agent: meta-externalagent
+User-agent: Applebot-Extended
+Disallow: /
+
+Sitemap: https://growthstage.leckerstonelabs.com/sitemap.xml
