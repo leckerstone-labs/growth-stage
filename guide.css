@@ -1,0 +1,43 @@
+/* Text guide pages (scripts/build-guides.js): a plain document in the app's colours. */
+:root {
+  --paper: #efebe1;
+  --paper-2: #e6e0d2;
+  --ink: #1f2a1c;
+  --ink-2: #4b5644;
+  --muted: #7d8475;
+  --line: rgba(31, 42, 28, 0.14);
+  --accent: #2f5d3a;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto; max-width: 44rem;
+  padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased; overflow-wrap: break-word;
+}
+a { color: var(--accent); }
+
+.site { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+.site a { color: var(--muted); text-decoration: none; }
+
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; }
+h1 { font-size: 2.1rem; margin: 0.6em 0 0.4em; letter-spacing: -0.01em; }
+h2 { font-size: 1.45rem; margin: 2em 0 0.4em; padding-bottom: 0.2em; border-bottom: 1px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 0 0 0.3em; }
+.code { color: var(--accent); font-variant-numeric: lining-nums tabular-nums; margin-right: 0.2em; }
+.intro { color: var(--ink-2); }
+
+.stage { margin: 1.4em 0; scroll-margin-top: 1em; }
+.stage p { margin: 0.4em 0; }
+.stage .check { padding: 0.5em 0.75em; border-radius: 8px; background: rgba(47, 93, 58, 0.08); border: 1px solid rgba(47, 93, 58, 0.22); }
+.stage .model { font-size: 0.9em; }
+
+.sources, .crops ul { padding-left: 1.2em; }
+.sources li, .crops li { margin: 0.25em 0; }
+
+footer { margin-top: 2.5em; padding-top: 1em; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); }
+footer p { margin: 0.5em 0; }

@@ -114,6 +114,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .info .note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
 .info .sources { margin: 6px 0 0; font-size: 12px; line-height: 1.4; color: var(--muted); }
 .info .sources a { color: var(--accent); }
+.info .guides { margin: 6px 0 0; font-size: 12px; line-height: 1.4; color: var(--muted); }
+.info .guides a { color: var(--accent); }
 .info .about { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
 .info .note a, .info .about a { color: var(--accent); }
 .install-btn {

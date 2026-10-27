@@ -1,15 +1,20 @@
 #!/bin/sh
-# Builds dist/ for Cloudflare: copies only the files the web app needs, stamps
-# the service worker with a version and the list of files to precache, and
-# writes the _headers file (caching and security headers).
+# Builds dist/ for Cloudflare: copies only the files the web app needs, adds
+# the text guide pages (scripts/build-guides.js), stamps the service worker
+# with a version and the list of files to precache, and writes the _headers
+# file (caching and security headers).
 # reference/ (AHDB copyright images), scripts/, .claude/ and the project notes
 # are deliberately never copied: only the paths listed below are.
 set -e
 cd "$(dirname "$0")/.."
 rm -rf dist
 mkdir -p dist
-cp -R index.html styles.css manifest.webmanifest sw.js favicon.ico og-image.png icons src vendor dist/
+cp -R index.html styles.css guide.css manifest.webmanifest sw.js favicon.ico og-image.png icons src vendor dist/
 find dist -name '.DS_Store' -delete
+
+# Text guide per crop, sitemap.xml and the guide links in index.html, all from
+# the crop registry. Before the version hash, so they are part of it.
+node scripts/build-guides.js dist
 
 # --- Service worker version and precache list -------------------------------
 # Version = a hash of every shipped file (names and contents), and nothing
@@ -29,10 +34,13 @@ files = []
 for root, _, names in os.walk('dist'):
     for n in names:
         p = os.path.relpath(os.path.join(root, n), 'dist')
-        if p in ('sw.js', '_headers', 'index.html'):
+        if p in ('sw.js', '_headers', 'index.html', 'sitemap.xml'):
             continue
+        # A page is cached as its directory, "<dir>/" (Cloudflare redirects
+        # <dir>/index.html to <dir>/), the way "./" below stands in for the app.
+        if p.endswith('/index.html'):
+            p = p[:-len('index.html')]
         files.append(p)
-# The page itself is cached as "./" (Cloudflare redirects /index.html to /).
 files = ['./'] + sorted(files)
 sw = open('dist/sw.js').read()
 start, end = '/*__PRECACHE__*/', '/*__END__*/'
