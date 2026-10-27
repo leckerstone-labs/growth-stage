@@ -50,14 +50,16 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // e.g. Cloudflare analytics
 
-  // Page loads (any ?crop=… query) all get the one cached index page.
+  // Page loads: the app (any ?crop=… query) gets the one cached index page;
+  // any other page (a text guide, /winter-wheat/) gets its own, by path.
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
-      const hit = await cache.match(SHELL, { ignoreSearch: true });
+      const key = url.pathname === new URL(SHELL).pathname ? SHELL : url.origin + url.pathname;
+      const hit = await cache.match(key, { ignoreSearch: true });
       if (hit) return hit;
       const res = await fetch(req);
-      if (res.ok && url.pathname === new URL(SHELL).pathname) cache.put(SHELL, await clean(res.clone()));
+      if (res.ok) cache.put(key, await clean(res.clone()));
       return res;
     })());
     return;
